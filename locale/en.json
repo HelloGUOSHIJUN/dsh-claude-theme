@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Claude theme",
+    "description": "Repaints the Web UI in the Claude desktop palette: warm paper surfaces, clay accents, compact corners, softer elevation, plus serif typography at 17px.",
+    "detail": "docs/DETAIL.md"
+  }
+}
