@@ -111,6 +111,28 @@ git push origin main
 ### 4. 改文件名/结构后记得同步 package.json 的 files 白名单
 之前 `scripts/` 漏在 `files` 外，导致 npm 用户拿不到构建脚本。
 
+### 5. 停用 ≠ 卸载；停用后必须刷新页面
+**别用「卸载」来临时关掉主题。** 卸载会把插件从 profile 的 `bundles` 列表里删掉，
+要重新装才能恢复，很麻烦。
+
+正确做法：**插件面板里点「停用」→ 刷新页面（⌘R）**。
+已注入的 CSS 不会自动撤销，不刷新会看起来像"停用没生效"。
+
+### 6. 插件生效需要三处配置同时齐全
+profile（`~/.dsh/profiles/desktop/`）里缺一不可：
+
+| 位置 | 内容 |
+|---|---|
+| `package.json` → `dependencies` | `"dsh-theme-claude": "link:<项目绝对路径>"` |
+| `package.json` → `dsh.profile.bundles` | 数组里要有 `"dsh-theme-claude"` |
+| `node_modules/` | 指向项目目录的**符号链接**（不是实体目录） |
+
+改完 `bundles` **必须重启 DSH**（⌘Q 再打开），热重载不生效。
+
+### 7. 别在界面里安装自己正在开发的插件
+在「添加插件」里装 npm 版，会把 `node_modules` 里的符号链接替换成实体目录，
+之后改源码就不再生效。要测 npm 版请换台机器，或测完改回 `link:`。
+
 ---
 
 ## 已确认的"有意为之"设计（不是 bug）
