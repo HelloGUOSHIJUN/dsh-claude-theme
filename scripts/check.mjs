@@ -70,6 +70,7 @@ for (const ms of strayDurations) {
 // --- docs consistency -----------------------------------------------------
 // Values quoted in the shipped docs must match what the build actually emits.
 const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
+const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8')
 const detail = readFileSync(new URL('../docs/DETAIL.md', import.meta.url), 'utf8')
 const lightBlocks = css.split('html body {').map((part) => part.split('\n}')[0])
 const lightBlock = lightBlocks.find((block) => block.includes('--dsw-alias-bg-base')) ?? ''
@@ -105,7 +106,7 @@ const RETIRED = [
   ['0 3px 14px', 'stale composer shadow'],
 ]
 for (const [stale, why] of RETIRED) {
-  for (const [name, doc] of [['README.md', readme], ['docs/DETAIL.md', detail]]) {
+  for (const [name, doc] of [['README.md', readme], ['docs/DETAIL.md', detail], ['CHANGELOG.md', changelog]]) {
     if (doc.includes(stale)) {
       console.error(`✗ ${name}: ${why} "${stale}" is still documented`)
       failures += 1
