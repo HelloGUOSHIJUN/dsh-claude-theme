@@ -1,39 +1,39 @@
-# Changelog
+# 更新日志
 
 ## 1.0.0
 
-First public release.
+首次公开发布。
 
-### Token layer
+### 令牌层
 
-- Surfaces: `#faf9f5` canvas / `#f0eee6` rail / `#ffffff` cards; dark `#151515` / `#0b0b0b` / `#1a1a19`–`#20201f`; overlay `#262624`. All 14 official DSH theme tokens are overridden in both themes.
-- Text `#0b0b0b` / `#52514e` / `#898781`; borders follow the CDS alpha ramp (5 / 10 / 20 / 35 %, flipping to white in dark).
-- Accent roles follow the design system: blue (`#2a78d6` / `#6da7ec`) for focus rings, links and selection; clay (`#c6613f` / `#d97757`) reserved for Claude-initiated actions such as the send disc.
-- Radii `5 / 7 / 8 / 10 / 14 / 18px`, with the composer at 14px and the message bubble at 18px.
+- 表面：画布 `#faf9f5` / 侧栏 `#f0eee6` / 卡片 `#ffffff`；暗色 `#151515` / `#0b0b0b` / `#1a1a19`–`#20201f`；浮层 `#262624`。全部 14 个官方 DSH 主题令牌在亮暗两套里都做了覆盖。
+- 文字 `#0b0b0b` / `#52514e` / `#898781`；边框跟随 CDS 透明度阶梯（5 / 10 / 20 / 35 %，暗色下翻转为白色）。
+- 强调色按设计系统分工：蓝色（`#2a78d6` / `#6da7ec`）用于焦点环、链接和选区；陶土橙（`#c6613f` / `#d97757`）只留给发送按钮这类 Claude 主动发起的动作。
+- 圆角 `5 / 7 / 8 / 10 / 14 / 18px`，输入框 14px，消息气泡 18px。
 
-### Component layer
+### 组件层
 
-- Composer card: 14px radius, CDS inset-hairline shadow, 28px controls, clay send disc.
-- Message bubble 18px with CDS padding; code blocks 12px with a 32px banner; tables get padding and hairline rows.
-- Header: CDS segmented control for the view tabs.
-- Rail: Songti serif at 17px/600, flat paper surface, clay iconography.
-- Menus, toasts, dialogs, attachment cards and the jump-to-latest disc.
+- 输入卡片：14px 圆角、CDS 内嵌发丝边阴影、28px 控件、陶土橙发送圆钮。
+- 消息气泡 18px 搭配 CDS 内边距；代码块 12px 配 32px 横幅；表格补齐内边距和发丝分隔线。
+- 顶栏：视图标签改为 CDS 分段控件。
+- 侧栏：宋体衬线，17px / 600 字重，平面纸感，陶土橙图标。
+- 菜单、提示条、对话框、附件卡片、回到底部圆钮。
 
-### Motion
+### 动效
 
-- CDS 5-step duration scale (60 / 120 / 200 / 300 / 450ms) on the swift curve.
-- 15-stop `linear()` spring token, turn rise-in, running-step breathing, reasoning glow, pill overshoot, skeleton breathing.
-- Every animation is wrapped in `prefers-reduced-motion: no-preference`.
+- CDS 5 阶时长标尺（60 / 120 / 200 / 300 / 450ms），swift 缓动曲线。
+- 15 段 `linear()` 弹簧令牌、回合升起、运行中呼吸、推理光晕、胶囊过冲、骨架屏呼吸。
+- 所有动画都包在 `prefers-reduced-motion: no-preference` 内。
 
-### Tooling
+### 工程
 
-- `scripts/build.mjs` is the single source of truth; `theme.css` and `client.js` are generated from it.
-- `scripts/check.mjs` guards 40 invariants: token values, the CDS duration scale, documentation consistency, and two container-hover regressions.
-- Runtime effects are limited to a single stylesheet injection — no timers or observers.
+- `scripts/build.mjs` 是唯一源头，`theme.css` 和 `client.js` 由它生成。
+- `scripts/check.mjs` 守护 40 项不变量：令牌取值、CDS 时长标尺、文档一致性，以及两类悬停回归。
+- 运行时开销只有一次样式表注入，没有定时器和观察器。
 
-### Known limitations
+### 已知限制
 
-- Content font size is pinned to 17px, overriding the Appearance setting.
-- The global font stack is serif; this is deliberate but changes reading texture noticeably.
-- Component rules match class-name stems; a future DSH redesign may drop individual refinements while the palette keeps working.
-- CDS 3.0's `@property`-driven scroll fades, `data-mode` three-state scoping and 55 keyframes are not implemented: they need host container support that DSH does not expose.
+- 正文固定 17px，**设置 → 外观** 的字号调节失效。
+- 全局使用衬线字体；这是刻意的，但会明显改变阅读观感。
+- 组件规则靠类名主干匹配；未来 DSH 大改版可能让个别细节失效，配色会继续生效。
+- **未实现** CDS 3.0 的 `@property` 驱动滚动渐隐、`data-mode` 三态作用域和 55 项关键帧：这些需要宿主提供 DSH 目前没有暴露的容器支持。

@@ -1,122 +1,111 @@
 # dsh-claude-theme
 
-A Claude-style visual theme for the [DeepSeek Harness](https://github.com/deepseek-ai) Web UI.
-It overrides the host's design tokens and restyles several component surfaces.
-It does not change conversations, tools, shortcuts, or any agent behaviour.
+把 [DeepSeek Harness](https://github.com/deepseek-ai) 的 Web 界面换成 Claude 的视觉语言。
 
-> **Not purely a recolour.** The theme also makes a few deliberate interface
-> changes. Read [Interface changes](#interface-changes) before installing.
+主题通过覆盖 Harness 自带的设计令牌，再加一层组件级 CSS 实现。它不改变会话逻辑、工具行为或快捷键。
 
-_No screenshots are bundled: they would show real conversation titles. Install it
-and look at your own UI._
+> **不只是换色。** 主题还包含几处刻意的界面改动，安装前请先读 [界面变化](#界面变化)。
 
-## What it changes
+_仓库不含截图：截图会暴露真实会话标题。装好后自己看界面更直接。_
 
-| Layer | Change |
+## 改了什么
+
+| 层次 | 内容 |
 | --- | --- |
-| Surfaces | CDS ladder: `#faf9f5` canvas / `#f0eee6` rail / `#ffffff` cards, dark `#151515` / `#0b0b0b` / `#1a1a19`–`#20201f`, popover `#262624` |
-| Borders | CDS alpha ramp: 5 / 10 / 20 / 35 % (flips to white in dark) |
-| Text | `#0b0b0b` primary, `#52514e` secondary, `#898781` muted (dark: `#f0efec` / `#c3c2b7` / `#898781`) |
-| Accent | Blue accent (`#2a78d6` / `#6da7ec`) for focus rings, links and selection; clay brand (`#c6613f` / `#d97757`) reserved for Claude-initiated actions such as the send disc |
-| Radii | composer 14px, message bubble 18px, panels & controls 10px, xs/sm 5/7px |
-| Elevation | CDS `sm` / `md` / `lg` shadows (`hsl(from gray-900 / 6–8%)`), popover `0 8px 24px / 0 2px 6px`, composer inset-hairline shadow |
-| Type | 1.6 line-height, 17px fixed content size, 600-weight headings, Songti serif stack throughout |
-| Motion | CDS 5-step durations (60 / 120 / 200 / 300 / 450ms): turn rise-in, control press, rail hover, running-step breathing |
-| Components | Composer card, user bubble, code blocks, tables, menus, toasts, dialogs, attachment cards, jump-to-latest disc |
+| **表面** | 画布 `#faf9f5` / 侧栏 `#f0eee6` / 卡片 `#ffffff`；暗色 `#151515` / `#0b0b0b` / `#1a1a19`–`#20201f`；浮层 `#262624` |
+| **边框** | 跟随 CDS 透明度阶梯：5 / 10 / 20 / 35 %（暗色下自动翻转为白色） |
+| **文字** | `#0b0b0b` 主 / `#52514e` 次 / `#898781` 弱（暗色 `#f0efec` / `#c3c2b7` / `#898781`） |
+| **强调色** | 蓝色（`#2a78d6` / `#6da7ec`）用于焦点环、链接和选区；陶土橙（`#c6613f` / `#d97757`）只留给 Claude 主动发起的动作，比如发送按钮 |
+| **圆角** | `5 / 7 / 8 / 10 / 14 / 18px`，输入框 14px，消息气泡 18px |
+| **投影** | CDS `sm` / `md` / `lg` 三级阴影，浮层双层扩散，输入框内嵌发丝边 |
+| **排版** | 全局衬线字体，正文 17px，行高 1.6，标题 600 字重 |
+| **动效** | CDS 5 阶时长（60 / 120 / 200 / 300 / 450ms），15 段 `linear()` 弹簧曲线 |
+| **组件** | 输入卡片、用户气泡、代码块、表格、菜单、提示条、对话框、附件卡片、回到底部圆钮 |
 
-## Interface changes
+全部 14 个官方 DSH 主题令牌都在亮色和暗色两套里做了覆盖。
 
-These go beyond colour. Each one is intentional, and each one is visible.
+## 界面变化
 
-| Change | What you will notice |
+以下改动超出了换色范围。每一条都是有意的，而且肉眼可见。
+
+| 变化 | 你会看到什么 |
 | --- | --- |
-| **Serif typography everywhere** | Body text, rail and menus switch to the `Noto Serif SC / Songti SC` stack instead of the host's system sans-serif. This is the single most noticeable change. |
-| **Fixed 17px content size** | The **Settings → Appearance** font-size control stops having any effect. |
-| **Brand wordmark hidden** | The sidebar brand row is removed; the rail opens directly on New chat. |
-| **Composer status line hidden** | `[data-composer-stat]`, the status hint under the input, is not rendered. |
-| **View tabs become a capsule** | The conversation view switcher turns from a native tab strip into a 999px segmented capsule. |
-| **Message-action tooltips flip upward** | The action-row tooltips open upward so the docked composer no longer covers them. |
+| **全局衬线字体** | 正文、侧栏和菜单改用 `Noto Serif SC / Songti SC` 字体栈，不再是系统无衬线字体。这是最显眼的变化。 |
+| **正文固定 17px** | **设置 → 外观** 里的字号调节不再生效。 |
+| **品牌字标隐藏** | 侧栏顶部的品牌行被移除，直接以「新对话」开头。 |
+| **输入框状态行隐藏** | 输入框下方的 `[data-composer-stat]` 状态提示不再显示。 |
+| **视图标签变胶囊** | 对话视图切换器从原生标签条变成 999px 胶囊分段控件。 |
+| **消息操作 tooltip 上翻** | 操作行的 tooltip 改向上弹出，避免被常驻输入框遮挡。 |
 
-To get any of these back, disable the bundle in **Plugins** and reload.
+想恢复其中任何一项：在 **插件** 里停用本主题，然后刷新页面。
 
-## Install
+## 安装
 
-Inside DeepSeek Harness: **Plugins → Add plugin**, then install `dsh-claude-theme`
-from npm (or point it at a local checkout directory). Reload the page once.
-
-From the CLI/runtime side, the same thing is a bundle install:
+在 DeepSeek Harness 里指向本仓库或本地目录，然后刷新一次页面。
 
 ```yaml
-# what the bundle patch inserts
+# bundle patch 插入的内容
 - insert:
     - id: claude-theme
       name: dsh-claude-theme
 ```
 
-Disable it in **Plugins** to return to the stock UI; nothing else in the app is
-touched.
+在 **插件** 里停用即可恢复原生界面，应用其他部分不受影响。
 
-## Compatibility
+## 兼容性
 
-Built against DeepSeek Harness `0.2.2-rc.5`. Token overrides survive updates;
-component-level rules match on class-name stems and stable `data-*` hooks, so a
-future redesign may drop individual refinements (the palette and typography keep
-working).
+基于 DeepSeek Harness `0.2.2-rc.5` 构建。令牌层覆盖能扛住版本更新；组件层规则靠类名主干和稳定的 `data-*` 钩子匹配，所以未来 DSH 大改版可能让个别细节失效，但配色和排版会继续生效。
 
-Known limits:
+已知限制：
 
-- The theme pins the content font size to 17px, so the Appearance setting has no effect (see [Interface changes](#interface-changes)).
-- Some DSH surfaces have no Claude counterpart (usage stats, brand blocks); those
-  are left native rather than restyled into something they are not.
-- `:has()` selectors are used without an `@supports` guard, which can add a small
-  amount of style-recalculation cost in very long conversations.
-- CDS 3.0's `@property`-driven scroll fades, `data-mode` three-state scoping and
-  55 keyframes are **not** implemented: they need host container support that DSH
-  does not expose.
+- 正文固定 17px，**设置 → 外观** 的字号调节失效（见[界面变化](#界面变化)）。
+- 全局字体是衬线字体——这是刻意的，但确实明显改变阅读观感。
+- `:has()` 选择器没有加 `@supports` 兜底，超长会话快速滚动时可能有轻微性能开销。
+- **未实现** CDS 3.0 的 `@property` 驱动滚动渐隐、`data-mode` 三态作用域和 55 项关键帧：这些需要宿主提供 DSH 目前没有暴露的容器支持。
 
-## Customize
+## 自定义
 
-Everything is generated from `scripts/build.mjs`:
+所有内容都由 `scripts/build.mjs` 生成：
 
-| Want to change | Edit |
+| 想改什么 | 改哪里 |
 | --- | --- |
-| Palette / text colours | the `STATIC`, `LIGHT` and `DARK` maps |
-| macOS-specific values | the `PLATFORM_LIGHT` / `PLATFORM_DARK` maps |
-| Corner radii, shadows | the `GEOMETRY` / `GEOMETRY_DARK` maps |
-| Type scale | the `FONTS` map |
-| Motion timings | the component rules at the bottom of the CSS template |
-| Serif rail, clay accents, component shapes | the component rules at the bottom of the CSS template |
+| 配色 / 文字颜色 | `STATIC`、`LIGHT`、`DARK` 三个映射表 |
+| macOS 专用取值 | `PLATFORM_LIGHT` / `PLATFORM_DARK` |
+| 圆角、投影 | `GEOMETRY` / `GEOMETRY_DARK` |
+| 字号体系 | `FONTS` |
+| 动效时长 | 模板底部的组件规则 |
+| 衬线侧栏、陶土点缀、组件形状 | 模板底部的组件规则 |
 
 ```sh
-npm run build   # regenerate theme.css + client.js
-npm run check   # assert the token values the theme depends on
+npm run build   # 重新生成 theme.css 和 client.js
+npm run check   # 校验主题依赖的令牌与不变量
 ```
 
-`npm run check` is the regression guard: it rebuilds and fails if a token the
-theme relies on disappears or drifts.
+`npm run check` 是回归守卫：它会重新构建，并在任何一项令牌或不变量发生变化时报错。目前覆盖 **40 项**：
 
-## Troubleshooting
+- 令牌取值（亮色 / 暗色）
+- CDS 5 阶时长标尺
+- README / DETAIL / CHANGELOG 三份文档与实际产物的一致性
+- 两类悬停回归：容器背景溢出圆角、嵌套卡片层层上浮
 
-- **The plugin shows 异常 / incompatible.** The bundle declares
-  `engines.dsh >=0.2.2-0`; ranges without the `-0` suffix do not match
-  prerelease builds such as `0.2.2-rc.5`.
-- **Styles are not visible after installing.** The client module mounts at page
-  load: reload the page once. Editing the theme in place also needs a reload.
-- **Something looks wrong after a DSH upgrade.** Token-level changes keep
-  working; component rules keyed on class-name stems may need updating. Run
-  `npm run check` to confirm the generated tokens are intact.
+## 排查
 
-## Development
+- **插件显示「异常 / 不兼容」。** bundle 声明了 `engines.dsh >=0.2.2-0`；不带 `-0` 后缀的版本范围匹配不上 `0.2.2-rc.5` 这类预发布版本。
+- **装完看不到样式。** 客户端模块在页面加载时挂载，刷新一次即可。就地修改主题同样需要刷新。
+- **DSH 升级后界面不对。** 令牌层会继续生效；靠类名主干匹配的组件规则可能需要更新。跑一次 `npm run check` 确认产物完整。
+
+## 开发
 
 ```sh
-node scripts/build.mjs     # regenerates theme.css + client.js from the token maps
+node scripts/build.mjs     # 从令牌映射表重新生成 theme.css 和 client.js
 ```
 
-`src` of truth is `scripts/build.mjs`: palette maps, radii, type scale and the
-component rules all live there, and the generated `client.js` embeds the CSS so
-the browser needs no extra request.
+唯一源头是 `scripts/build.mjs`：配色表、圆角、字号体系和组件规则都在里面，生成的 `client.js` 内嵌 CSS，浏览器不需要额外请求。
 
-## License
+## 许可
 
-MIT. See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md) for the design-token
-attribution and trademark notes.
+MIT。设计令牌的出处与商标说明见 [LICENSE](LICENSE) 和 [NOTICE.md](NOTICE.md)。
+
+色板、圆角、阴影与排版密度取自 [open-claude-ui](https://github.com/Caho1/open-claude-ui)（MIT），并按该项目 v4 取证报告校正。主题不包含该项目的组件代码。
+
+本项目与 Anthropic 无关，Claude 是 Anthropic 的商标。

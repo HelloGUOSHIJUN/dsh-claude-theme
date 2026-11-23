@@ -1,7 +1,7 @@
 {
   "name": "dsh-claude-theme",
   "version": "1.0.0",
-  "description": "Claude-style visual theme for the DeepSeek Harness Web UI: warm paper surfaces, clay accents, CDS radii, soft elevation and a serif rail.",
+  "description": "把 DeepSeek Harness 的 Web 界面换成 Claude 的视觉语言：暖白纸感底色、陶土橙点缀、CDS 圆角与柔和投影，以及衬线字体侧栏。",
   "type": "module",
   "license": "MIT",
   "author": "HelloGUOSHIJUN",
