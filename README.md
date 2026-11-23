@@ -1,4 +1,4 @@
-# dsh-claude-theme
+# dsh-theme-claude
 
 把 [DeepSeek Harness](https://github.com/deepseek-ai) 的 Web 界面换成 Claude 的视觉语言。
 
@@ -47,7 +47,7 @@ _仓库不含截图：截图会暴露真实会话标题。装好后自己看界�
 # bundle patch 插入的内容
 - insert:
     - id: claude-theme
-      name: dsh-claude-theme
+      name: dsh-theme-claude
 ```
 
 在 **插件** 里停用即可恢复原生界面，应用其他部分不受影响。
