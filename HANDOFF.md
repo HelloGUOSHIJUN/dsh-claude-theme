@@ -67,8 +67,10 @@ git push origin main
 
 ```
 ~/.dsh/profiles/desktop/package.json
-  "dsh-claude-theme": "link:/Users/guoshijun/Desktop/DeepSeek Harness/dsh-claude-theme"
+  "dsh-claude-theme": "link:<项目目录的绝对路径>"
 ```
+
+（实际值就是你本地 clone 这个仓库的路径。）
 
 改完源码跑 `build` → **刷新页面**即可，不需要重装。
 停用：**插件 → Claude theme → 关闭 → 刷新**。
