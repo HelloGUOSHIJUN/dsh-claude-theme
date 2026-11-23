@@ -22,7 +22,9 @@
 | 版本 tag | ✅ `v1.0.0` |
 | GitHub Release | ✅ 已发布（中文说明） |
 | 回归检查 | ✅ 40 项全过 |
-| npm 发布 | ⬜ 跳过（包名被占，见下） |
+| npm 发布 | ✅ `dsh-theme-claude@1.0.0` — https://www.npmjs.com/package/dsh-theme-claude |
+| 插件市场收录 | ⏳ PR #18259 待合并 — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/18259 |
+| GitHub topics | ✅ 10 个（dsh / dsh-plugin / theme / claude 等） |
 | 截图 | ⬜ 无（会暴露真实会话标题） |
 
 ---
@@ -144,14 +146,33 @@ git push origin main
 
 ---
 
-## npm 为什么没发
+## npm 发布（已完成）
 
-包名 `dsh-claude-theme` 已被他人占用（`jipika`，2026-09-24 发布 0.1.0）。
+**已发布：`dsh-theme-claude@1.0.0`**
+https://www.npmjs.com/package/dsh-theme-claude
 
-如果将来要发，需要：
-1. 注册 npm 账号并**验证邮箱**（不验证无法发布）
-2. 换名，推荐 `@helloguoshijun/dsh-claude-theme`（scope 包，永远不会被抢）
-3. `npm login` → `npm publish`
+安装：`dsh plugin add dsh-theme-claude`
+
+### 为什么用这个包名
+
+起初叫 `dsh-claude-theme`，但 npm 上已被占用。查证后发现 `dsh-claude-theme`、`dsh-claude-style`、`dsh-claude-skin` **三个都已被占**，最终用 `dsh-theme-claude`。
+
+GitHub 仓库名仍是 `dsh-claude-theme`，不影响——两者可以不同。
+
+### 发布时遇到的坎
+
+1. **npm 账号必须开 2FA**（`auth-and-writes`），否则 `npm publish` 报 403。开启后发布需要在浏览器授权。
+2. **npmjs.com 网页被 Cloudflare 拦（403）**，`registry.npmjs.org` 正常。注册和登录靠浏览器换网络才通。
+3. 发布后先出现 `0.0.0-stage` 占位版本，约 60 秒后变成真实版本，属正常。
+
+### 以后发新版本
+
+```bash
+cd ~/Desktop/DeepSeek\ Harness/dsh-claude-theme
+npm version patch    # 或 minor / major
+git push --follow-tags
+npm publish          # 需要浏览器授权 2FA
+```
 
 ---
 
