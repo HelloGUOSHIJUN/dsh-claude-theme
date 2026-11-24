@@ -616,6 +616,33 @@ button[class*='_newSession']:hover {
   display: none !important;
 }
 
+/* Tasks panel (the live todo list docked above the composer).
+   Two spacings are too tight in the shipped layout:
+   1. Its body pads 6px top/bottom, so the last task sits almost on the card's
+      bottom edge — Claude's cards breathe with 12px.
+   2. Its dock pulls toward the composer with a NEGATIVE bottom margin
+      (calc(0px - stack-gap - 3px)), cramming the panel against the input card.
+
+   The panel carries a stable hook — [data-testid='todo-panel'] — so every rule
+   below is scoped to it. Do NOT anchor on _body / _list / _item: those stems are
+   extremely common in this UI and would reach unrelated components. */
+/* Breathing room inside the panel; bottom stays a touch looser so the last
+   task never sits on the card edge. */
+[data-testid='todo-panel'] [class*='_body'] {
+  padding-top: 10px !important;
+  padding-bottom: 12px !important;
+}
+
+[data-testid='todo-panel'] [class*='_list'] {
+  gap: 10px !important;
+}
+
+/* The dock wrapping the panel: replace the negative pull with a real gap so
+   the panel and the input card read as two objects. */
+[class*='_dock']:has([data-testid='todo-panel']) {
+  margin-bottom: 8px !important;
+}
+
 /* --------------------------------------------------------------------------
    Code and attachment surfaces: CDS uses a 12px rounded sandbox with a hairline
    and a quiet banner; attachment cards sit on the card surface.

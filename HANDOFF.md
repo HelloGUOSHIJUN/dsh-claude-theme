@@ -21,7 +21,7 @@
 | GitHub 仓库 | ✅ 已推送，main 分支 |
 | 版本 tag | ✅ `v1.0.0` |
 | GitHub Release | ✅ 已发布（中文说明） |
-| 回归检查 | ✅ 59 项全过 |
+| 回归检查 | ✅ 64 项全过 |
 | npm 发布 | ✅ `dsh-theme-claude@1.0.0` — https://www.npmjs.com/package/dsh-theme-claude |
 | 插件市场收录 | ⏳ PR #18259 待合并 — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/18259 |
 | GitHub topics | ✅ 10 个（dsh / dsh-plugin / theme / claude 等） |
@@ -36,7 +36,7 @@
 | `scripts/build.mjs` | **唯一源头**（1422 行） | 令牌表 + 组件规则，改这里 |
 | `theme.css` | 产物（1316 行） | **自动生成，不要手改** |
 | `client.js` | 产物，内嵌 CSS | **自动生成，不要手改** |
-| `scripts/check.mjs` | 回归守卫（262 行，59 项） | 改完必跑 |
+| `scripts/check.mjs` | 回归守卫（300 行，64 项） | 改完必跑 |
 | `README.md` | 中文说明 | 含「界面变化」章节 |
 | `CHANGELOG.md` | 中文更新日志 | 已被检查覆盖 |
 | `docs/DETAIL.md` | 插件面板详情页 | 原本就是中文 |
@@ -79,7 +79,7 @@ git push origin main
 
 ---
 
-## 59 项检查覆盖什么
+## 64 项检查覆盖什么
 
 1. **令牌取值** — 亮色/暗色两套关键令牌不能丢
 2. **CDS 5 阶时长标尺** — 任何动画时长必须是 60/120/200/300/450ms
@@ -135,6 +135,16 @@ profile（`~/.dsh/profiles/desktop/`）里缺一不可：
 ### 7. 别在界面里安装自己正在开发的插件
 在「添加插件」里装 npm 版，会把 `node_modules` 里的符号链接替换成实体目录，
 之后改源码就不再生效。要测 npm 版请换台机器，或测完改回 `link:`。
+
+### 14. 任务面板的两个间距坑（1.1.4 修复）
+面板本体在 `@deepseek-ai/dsh-client-ui-conversation/TodoPanel.module.css`：
+- `_body` 的 `padding: 6px 12px` → 最后一条任务贴住卡片底边。已改为 `10px/12px`。
+- 包裹它的 dock（`_6DJyyG_dock`）用 `margin: 0 auto calc(0px - var(--dsh-composer-stack-gap) - 3px)`，
+  `--dsh-composer-stack-gap` 是 `6px`，即**负 9px**，主动把面板拉向输入框。已改为正 `8px`。
+
+**选择器要点**：面板根节点有稳定钩子 `[data-testid='todo-panel']`，三条规则都锚定它。
+不要用 `_body` / `_list` / `_item` 裸匹配——这些后缀在整个 UI 里极常见，会波及无关组件。
+`check.mjs` 里有一条守卫专门盯着"裸匹配回归"。
 
 ### 13. 改主题后必须硬刷新，否则改了等于没改（最坑的一条）
 Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`，

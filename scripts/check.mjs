@@ -168,6 +168,37 @@ for (const token of ['--dsw-alias-settings-card-fill', '--dsw-alias-settings-car
   if (!darkSide) fail(`${token} is missing from the dark scheme`)
 }
 
+// --- tasks panel spacing ---------------------------------------------------
+// The todo panel docked above the composer shipped with two cramped spacings:
+// its body padded only 6px, and its dock pulled toward the input card with a
+// NEGATIVE bottom margin. Both are overridden, and both overrides are anchored
+// on the panel's stable test id rather than on _body / _list stems (those are
+// far too common in this UI and would reach unrelated components).
+const todoBody = css.match(
+  /\[data-testid='todo-panel'\] \[class\*='_body'\][^{]*\{[^}]*\}/,
+)?.[0] ?? ''
+if (!todoBody) {
+  fail('the todo panel body spacing override is missing (last task sits on the card edge)')
+} else if (!/padding-bottom:\s*12px/.test(todoBody)) {
+  fail('the todo panel body does not reserve 12px below the last task')
+}
+if (!/\[data-testid='todo-panel'\] \[class\*='_list'\]/.test(css)) {
+  fail('the todo panel list spacing override is missing')
+}
+const todoDock = css.match(
+  /\[class\*='_dock'\]:has\(\[data-testid='todo-panel'\]\)[^{]*\{[^}]*\}/,
+)?.[0] ?? ''
+if (!todoDock) {
+  fail('the todo dock is not detached from the composer (negative pull remains)')
+} else if (!/margin-bottom:\s*8px/.test(todoDock)) {
+  fail('the todo dock does not carry a positive gap to the composer')
+}
+// A bare _body / _list / _item rule would restyle half the UI.
+for (const stem of ['_body', '_list', '_item']) {
+  const bare = new RegExp(`\\n\\[class\\*='${stem}'\\]:`, 'm').test(css)
+  if (bare) fail(`a bare [class*='${stem}'] rule reaches unrelated components`)
+}
+
 // --- docs consistency -----------------------------------------------------
 // Values quoted in the shipped docs must match what the build actually emits.
 const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
@@ -252,5 +283,5 @@ if (failures > 0) {
   console.error(`\n${failures} check(s) failed`)
   process.exit(1)
 }
-const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 20
+const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 25
 console.log(`✓ ${total} checks passed (${css.length} bytes): tokens, CDS durations, docs`)
