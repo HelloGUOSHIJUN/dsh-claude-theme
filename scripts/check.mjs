@@ -140,9 +140,16 @@ for (const line of outsideHoverNone.split('\n')) {
   }
 }
 
+// The sidebar carries resident rows (New chat, Plugins) at its top, so a
+// top-edge mask washes them out permanently. It must not be a fade target.
+if (/\[data-sidebar-scrollport\]/.test(css.split("mask-image")[0] + (css.match(/(?:^|[\s,{])\[data-sidebar-scrollport\][^{]*\{[^}]*mask-image/) || [""])[0])) {
+  console.error("X [data-sidebar-scrollport] must not carry a mask-image fade")
+  failures += 1
+}
+
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed`)
   process.exit(1)
 }
-const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 1
+const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 2
 console.log(`✓ ${total} checks passed (${css.length} bytes): tokens, CDS durations, docs`)

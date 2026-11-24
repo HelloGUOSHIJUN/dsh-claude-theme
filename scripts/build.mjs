@@ -1174,9 +1174,12 @@ body[data-ds-dark-theme] {
   [role='menuitem']:nth-child(n + 7), [class*='_panelEntry']:nth-child(n + 7) { animation-delay: 120ms; }
 }
 
-/* 3 · Perceptual scroll fade on DSH's own scroll containers (sidebar history,
-   tool output, code blocks). Five stops, tuned so the falloff reads smooth. */
-[data-sidebar-scrollport],
+/* 3 · Perceptual scroll fade on DSH's own scroll containers (tool output,
+   code blocks). Five stops, tuned so the falloff reads smooth.
+
+   The sidebar is deliberately NOT included: its top holds the resident
+   New-chat row and the Plugins row, so a top-edge fade washes those out
+   permanently instead of hinting at scrollable content. */
 [class*='_scrollRegion'],
 [class*='_codeBody'] {
   --claude-fade: 28px;
