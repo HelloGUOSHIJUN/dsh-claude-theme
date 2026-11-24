@@ -21,7 +21,7 @@
 | GitHub 仓库 | ✅ 已推送，main 分支 |
 | 版本 tag | ✅ `v1.0.0` |
 | GitHub Release | ✅ 已发布（中文说明） |
-| 回归检查 | ✅ 40 项全过 |
+| 回归检查 | ✅ 59 项全过 |
 | npm 发布 | ✅ `dsh-theme-claude@1.0.0` — https://www.npmjs.com/package/dsh-theme-claude |
 | 插件市场收录 | ⏳ PR #18259 待合并 — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/18259 |
 | GitHub topics | ✅ 10 个（dsh / dsh-plugin / theme / claude 等） |
@@ -36,7 +36,7 @@
 | `scripts/build.mjs` | **唯一源头**（1422 行） | 令牌表 + 组件规则，改这里 |
 | `theme.css` | 产物（1316 行） | **自动生成，不要手改** |
 | `client.js` | 产物，内嵌 CSS | **自动生成，不要手改** |
-| `scripts/check.mjs` | 回归守卫（148 行，40 项） | 改完必跑 |
+| `scripts/check.mjs` | 回归守卫（262 行，59 项） | 改完必跑 |
 | `README.md` | 中文说明 | 含「界面变化」章节 |
 | `CHANGELOG.md` | 中文更新日志 | 已被检查覆盖 |
 | `docs/DETAIL.md` | 插件面板详情页 | 原本就是中文 |
@@ -79,13 +79,16 @@ git push origin main
 
 ---
 
-## 40 项检查覆盖什么
+## 59 项检查覆盖什么
 
 1. **令牌取值** — 亮色/暗色两套关键令牌不能丢
 2. **CDS 5 阶时长标尺** — 任何动画时长必须是 60/120/200/300/450ms
 3. **文档一致性** — README/DETAIL/CHANGELOG 写的值必须和产物一致
 4. **容器悬停回归** — 容器不能加 hover 背景（会溢出圆角）
 5. **嵌套卡片回归** — `[class*='_card']:hover` 必须带 `:not()` 守卫
+6. **字号设置回归**（1.1.0 新增）— `--dsh-content-font-size` 必须保留 delta 接线，且不能落在 `body` 上
+7. **输入框焦点回归**（1.1.1 新增）— 文本输入类控件不得画焦点环
+8. **列表行悬停回归**（1.1.1 新增）— 必须用暖色别名令牌 + 圆角，选中行优先，触屏不保留
 
 **这些守卫都做过负向测试**，确认能真抓到问题，不是摆设。
 
@@ -133,6 +136,57 @@ profile（`~/.dsh/profiles/desktop/`）里缺一不可：
 在「添加插件」里装 npm 版，会把 `node_modules` 里的符号链接替换成实体目录，
 之后改源码就不再生效。要测 npm 版请换台机器，或测完改回 `link:`。
 
+### 13. 改主题后必须硬刷新，否则改了等于没改（最坑的一条）
+Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`，
+浏览器把 `client.js` 当作**永不过期、永不改变**的资源缓存下来。
+所以：**普通刷新 `⌘R` 没用，重启 DSH 也没用**——旧字节已经在浏览器侧。
+
+必须用 **`⌘+Shift+R`**（或开发者工具里「清空缓存并硬性重新加载」）。
+
+1.1.1 ~ 1.1.3 那几轮"改了但没变化"全部是这个原因。当时一直在改 CSS 并反复重建，
+却从未验证"新代码是否真的执行了"。**教训：改完先确认新版已生效，再判断样式对不对。**
+
+### 11. 板块元素不要悬停底色（1.1.3 最终结论）
+**别再想着把列表行 / 设置卡片的悬停灰底"修好看"。** 1.1.1、1.1.2 反复调整它，
+方向本身是错的：这些是**板块**，不是控件。
+
+问题有二：
+1. 整块在指针下变色，读起来像布局在晃。
+2. 插件卡片占满整行时，底色会**溢出卡片边界**——宿主的
+   `.uuMOda_card[data-open=true] > .uuMOda_cardContent{background: hover}`
+   和 `@media(hover:hover){.uuMOda_cardContent:hover{background: hover}}`
+   把底色画在内部 button 上，那个盒子没有外边距，卡片 `overflow` 也管不住。
+
+**正确做法**：`_panelEntry` / `_panelRow` / `_newSession` / `_cardContent` 悬停一律
+`transparent`；展开卡片的内部盒子也不铺色。真正的控件（开关/按钮/链接）保留自己的悬停。
+**选中态要保留**（`_panelEntryActive` 用陶土橙），那是状态不是悬停。
+
+**教训**：拿到"这里不好看"的反馈时，先问是不是**根本就不该有这个效果**，
+不要默认"效果存在，只是不好看"。
+
+### 12. 插件页的类名主干是 _card，不是 _panelEntry
+插件设置页的条目是双列 grid 里的卡片：
+`_cards`(grid) > `_card`(18px 圆角+overflow:hidden) > `_cardContent`(button)。
+1.1.1 按 `_panelEntry` 写规则，从未命中，所以"修了但没变化"。
+**查真实类名的办法**：CSS-in-JS 模块在 `app.asar` 里，
+`node_modules/@deepseek-ai/dsh-client-ui-settings-plugin-inventory/lib/client.js`，
+用 `scripts` 里的 asar 提取思路读出 `const css=\`...\``，哈希前缀（如 `uuMOda_`）之后的主干可作子串匹配。
+
+### 9. 列表行悬停：原生灰底是通栏直角（1.1.1 修复）
+插件列表 / 设置项 / 会话行的悬停底色由 DSH 原生提供，是冷灰通栏直角色块。
+主题原本只在 `@media (hover: none)` 里清掉它，**鼠标环境完全没管**，于是看起来像贴上去的一条横带。
+**已修复**：加暖色别名令牌 + `--dsw-radius-lg`，并用 `:not([class*='_panelEntryActive'])` 让选中行优先。
+
+### 10. `:focus-visible` 一刀切会给输入框画红框（1.1.1 修复）
+全局焦点环对被聚焦的文本框打 1.5px 陶土橙描边，观感像报错。
+**已修复**：文本输入类控件排除在外，只给按钮/链接/菜单项画环。
+
+### 8. 字号变量不能定义在使用它的同一个节点上（1.1.0 修复）
+`--dsh-content-font-size` 要挂在 `html`，不能挂在 `body`。
+`--dsw-font-markdown-*` 这些排版令牌本身也定义在 `body` 上，并且要读取
+`--dsh-content-font-size`；如果这两者在同一个节点，就构成自引用循环，
+浏览器会把整组值判成无效（不报错，静默失效）。`check.mjs` 有两项守卫盯着这点。
+
 ---
 
 ## 已确认的"有意为之"设计（不是 bug）
@@ -140,7 +194,8 @@ profile（`~/.dsh/profiles/desktop/`）里缺一不可：
 这些是作者主动选择，**不要当成问题修掉**：
 
 - **全局衬线字体（宋体）** — `theme.css` 里 `Noto Serif SC / Songti SC` 栈
-- **正文固定 17px** — **设置 → 外观** 的字号调节会失效
+- **正文 17px 起步** — 在 17px 基线上叠加 **设置 → 外观** 的字号偏好。两者都要保留：
+  声明必须在 `html` 上（见下面坑 8），且必须带 `--dsh-content-font-delta` 接线。
 - **品牌字标行隐藏** — `[class*='_logoRow'] { display:none }`
 - **输入框状态行隐藏** — `[data-composer-stat] { display:none }`
 - **视图标签变 999px 胶囊**

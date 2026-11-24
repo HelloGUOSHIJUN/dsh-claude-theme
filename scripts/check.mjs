@@ -34,10 +34,14 @@ const darkChecks = [
 ]
 
 let failures = 0
+/** Record one failed assertion. The single entry point for every guard below. */
+const fail = (message) => {
+  console.error(`✗ ${message}`)
+  failures += 1
+}
 for (const [needle, label] of EXPECTED) {
   if (!css.includes(needle)) {
-    console.error(`✗ ${label}: missing "${needle}"`)
-    failures += 1
+    fail(`${label}: missing "${needle}"`)
   }
 }
 const darkBlock = css.split('html body[data-ds-dark-theme]')[1] ?? ''
@@ -65,6 +69,103 @@ for (const m of css.matchAll(/(?:transition|animation)(?:-duration)?:\s*([^;}]+)
 for (const ms of strayDurations) {
   console.error(`✗ duration ${ms}ms is not on the CDS scale (60/120/200/300/450ms)`)
   failures += 1
+}
+
+// --- font-size preference stays live --------------------------------------
+// The transcript baseline is Claude's 17px, but Settings -> Appearance must
+// still move it. That only works while (a) the content size is derived from
+// --dsh-content-font-delta and (b) it is declared on html, not body: the
+// --dsw-font-markdown-* tokens resolve the size, so a body-local definition
+// would make them reference themselves and the browser would drop the value.
+const rootFontSize = css.match(/^html \{[^}]*--dsh-content-font-size:\s*([^;!]+?)\s*(?:!important)?;/m)?.[1]?.trim()
+if (rootFontSize !== 'calc(17px + var(--dsh-content-font-delta, 0px))') {
+  console.error(
+    `✗ --dsh-content-font-size must be the 17px baseline plus the reader's delta (found "${rootFontSize ?? 'none'}" on html)`,
+  )
+  failures += 1
+}
+const bodyBlock = css.split('html body {').map((part) => part.split('\n}')[0])
+if (bodyBlock.some((block) => /--dsh-content-font-size:/.test(block))) {
+  console.error('✗ --dsh-content-font-size must not be declared on body (self-referencing markdown tokens)')
+  failures += 1
+}
+
+// --- focus ring stays off text entry --------------------------------------
+// The global :focus-visible ring drew a hard clay rectangle around every input
+// in Settings, which reads as an error state. Text entry must be excluded.
+const focusResetBlock = css.match(
+  /:is\(input, textarea, select, \[contenteditable\][^{]*\{[^}]*\}/,
+)?.[0] ?? ''
+if (!focusResetBlock) {
+  fail('the text-entry focus reset is missing (inputs will get a red box)')
+} else if (!/box-shadow:\s*none !important/.test(focusResetBlock)) {
+  fail('the text-entry focus reset does not clear box-shadow')
+}
+for (const role of ["[role='textbox']", "[contenteditable='true']"]) {
+  if (!css.includes(role)) fail(`text-entry focus reset does not cover ${role}`)
+}
+// Cards that already express focus must not paint a second ring.
+if (!/\[class\*='_field'\] :is\(input, textarea, select\):focus-visible/.test(css)) {
+  fail('fields inside a card still draw their own focus ring')
+}
+
+// --- block-level list surfaces carry NO hover tint ------------------------
+// These are slabs, not controls: tinting a whole row or an entire settings card
+// under the pointer reads as the layout wobbling, and on a full-width card the
+// tint spills past the card edge. The switch / button / link inside is the real
+// control and keeps its own hover. Guards below enforce "no tint", not "nice
+// tint" — the earlier theme got this backwards.
+const noTintBlock = css.match(
+  /\[class\*='_panelEntry'\]:hover:not\(\[class\*='_panelEntryActive'\]\)[^{]*\{[^}]*\}/,
+)?.[0] ?? ''
+if (!noTintBlock) {
+  fail('the block-level no-hover rule is missing (rows/cards will tint again)')
+} else {
+  if (!/background-color:\s*transparent/.test(noTintBlock)) {
+    fail('block-level list rows still paint a hover tint')
+  }
+  for (const sel of ["_panelRow", "_newSession", "_cardContent"]) {
+    if (!noTintBlock.includes(sel)) fail(`the no-hover rule does not cover ${sel}`)
+  }
+}
+// The Plugins tab separately tints its inner content box while a card is open.
+if (!/\[class\*='_card'\]\[data-open='true'\] > \[class\*='_cardContent'\]/.test(css)) {
+  fail('an expanded plugin card still tints its content box')
+}
+// The card shell must clip children so nothing can paint past its edge.
+const cardShell = css.match(/\[class\*='_cards'\] > \[class\*='_card'\][^{]*\{[^}]*\}/)?.[0] ?? ''
+if (!cardShell) {
+  fail('the plugin card shell (radius + clip) is not styled')
+} else {
+  if (!/border-radius:\s*var\(--dsw-radius-xl\)/.test(cardShell)) {
+    fail('the plugin card shell does not restore radius-xl')
+  }
+  if (!/overflow:\s*hidden/.test(cardShell)) {
+    fail('the plugin card shell does not clip its children (tint spills past the edge)')
+  }
+  if (!/:not\(\[class\*='_cardContent'\]\)/.test(cardShell)) {
+    fail('the card shell selector does not exclude inner _card* boxes (substring match)')
+  }
+}
+// Selection is a state and must survive: the active row keeps its clay tint.
+const activeRow = css.match(/\[class\*='_panelEntryActive'\] \{[^}]*\}/)?.[0] ?? ''
+if (!activeRow || !/rgba\(198, 97, 63/.test(activeRow)) {
+  fail('the active row lost its clay selection tint')
+}
+// Touch devices must not latch a tint either.
+const touchHoverReset = css.split('@media (hover: none)')[1]?.split('\n}')[0] ?? ''
+if (!/_panelEntry'\]:hover/.test(touchHoverReset) || !/background-color:\s*transparent/.test(touchHoverReset)) {
+  fail('touch devices latch a row tint (the (hover: none) reset is missing)')
+}
+
+// The settings card tokens were never overridden, so cards kept the host's cool
+// stroke and fill.
+for (const token of ['--dsw-alias-settings-card-fill', '--dsw-alias-settings-card-stroke']) {
+  if (!css.includes(token)) fail(`${token} is not overridden (settings cards keep the host cool palette)`)
+  const darkPlusLight = css.split('html body[data-ds-dark-theme]')[0].includes(token)
+  const darkSide = (css.split('html body[data-ds-dark-theme]')[1] ?? '').includes(token)
+  if (!darkPlusLight) fail(`${token} is missing from the light scheme`)
+  if (!darkSide) fail(`${token} is missing from the dark scheme`)
 }
 
 // --- docs consistency -----------------------------------------------------
@@ -151,5 +252,5 @@ if (failures > 0) {
   console.error(`\n${failures} check(s) failed`)
   process.exit(1)
 }
-const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 2
+const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 20
 console.log(`✓ ${total} checks passed (${css.length} bytes): tokens, CDS durations, docs`)

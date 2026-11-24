@@ -180,6 +180,8 @@ const LIGHT = {
   '--dsw-alias-interactive-bg-hover-danger': 'rgba(180, 35, 24, 0.06)',
   '--dsw-alias-interactive-bg-hover-solid': '#f0eee6',
   '--dsw-alias-interactive-bg-hover': 'rgba(11, 11, 11, 0.05)',
+  '--dsw-alias-settings-card-fill': '#ffffff',
+  '--dsw-alias-settings-card-stroke': 'rgba(11, 11, 11, 0.1)',
   '--dsw-alias-label-caption': '#898781',
   '--dsw-alias-label-deep-diving': '#c6613f',
   '--dsw-alias-label-deep-diving-shimmer': '#d97757',
@@ -320,6 +322,8 @@ const DARK = {
   '--dsw-alias-interactive-bg-hover-danger': 'rgba(229, 121, 111, 0.16)',
   '--dsw-alias-interactive-bg-hover-solid': '#262624',
   '--dsw-alias-interactive-bg-hover': 'rgba(245, 245, 245, 0.07)',
+  '--dsw-alias-settings-card-fill': '#1a1a19',
+  '--dsw-alias-settings-card-stroke': 'rgba(255, 255, 255, 0.1)',
   '--dsw-alias-label-caption': '#8a8a8a',
   '--dsw-alias-label-deep-diving': '#d97757',
   '--dsw-alias-label-deep-diving-shimmer': '#e08264',
@@ -497,6 +501,18 @@ ${declarations(STATIC)}
 html body {
 ${declarations(LIGHT)}
 ${declarations(GEOMETRY)}
+}
+
+/* Type scale lives on the root, not on body: the --dsw-font-markdown-* values
+   below resolve --dsh-content-font-size, and a body-local definition would make
+   them reference themselves (a cycle the browser drops as invalid). */
+html {
+  --dsh-content-font-size: calc(17px + var(--dsh-content-font-delta, 0px)) !important;
+  --dsh-content-font-size-secondary: calc(13px + var(--dsh-content-font-delta, 0px)) !important;
+}
+
+/* Typography tokens resolve the root size above, so they stay on body. */
+html body {
 ${declarations(FONTS)}
 }
 
@@ -621,6 +637,50 @@ body [class*='_root']:has([class*='_newSession']) ~ * :is([class*='_regionArea']
 
 body[data-ds-dark-theme] [class*='_panelEntryActive'] {
   background-color: rgba(217, 119, 87, 0.14) !important;
+}
+
+/* List surfaces (Plugins, Settings, session lists) carry NO hover tint.
+   These are block-level slabs: a whole row or an entire settings card changes
+   colour under the pointer, which reads as the layout wobbling rather than as
+   feedback, and on a full-width card the tint spills past the card edge. The
+   row is not the control — the switch, button or link inside it is — so the
+   hover affordance belongs on those, and they keep it through their own styles.
+
+   This also covers the host's two hover sources here: the flat
+   interactivity tint on rows, and the tint the Plugins tab paints on its
+   inner [_cardContent] box. */
+[class*='_panelEntry']:hover:not([class*='_panelEntryActive']),
+[class*='_panelRow']:hover,
+[class*='_newSession']:hover,
+[class*='_cardContent']:hover,
+[class*='_card'][data-open='true'] > [class*='_cardContent'] {
+  background-color: transparent !important;
+}
+
+/* Safety net for the same surfaces: the plugins tab re-injects its own
+   stylesheet into <head> AFTER this theme mounts, so a same-specificity rule can
+   lose the ordering race. Adding the element type raises specificity, which
+   makes the suppression independent of injection order. */
+button[class*='_cardContent']:hover,
+button[class*='_cardContent']:focus,
+a[class*='_panelEntry']:hover:not([class*='_panelEntryActive']),
+div[class*='_panelRow']:hover,
+button[class*='_newSession']:hover {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Selected and expanded rows still need to read as selected — but as a state,
+   not as a hover. (_panelEntryActive keeps the clay tint defined above.) */
+[class*='_card'][data-open='true'] {
+  background-color: var(--dsw-alias-settings-card-fill) !important;
+}
+
+/* The Plugins card keeps its own 18px corners and clips its children, so an
+   expanded card's inner box can never paint outside the card edge. */
+[class*='_cards'] > [class*='_card']:not([class*='_cardContent']):not([class*='_cardMainRow']):not([class*='_cardTitle']) {
+  border-radius: var(--dsw-radius-xl) !important;
+  overflow: hidden !important;
 }
 
 /* Rail iconography takes the clay accent as well. */
@@ -854,7 +914,9 @@ body {
    Batch 3 — focus ring, hero pills, hover elevation, code banner, controls
    ========================================================================== */
 
-/* 1 · CDS focus: 1.5px ring, 2px offset, soft blue glow. */
+/* 1 · CDS focus: a 1.5px ring on DISCRETE controls only (buttons, links, tabs,
+   menu items). Text entry is excluded below: a full clay rectangle around a
+   one-line field reads as an error state, not as focus. */
 :focus-visible {
   outline: none !important;
   box-shadow:
@@ -868,6 +930,22 @@ body[data-ds-dark-theme] :focus-visible {
     inset 0 0 0 1px #0b0b0b,
     0 0 0 1.5px #d97757,
     0 0 6px 1px rgba(217, 119, 87, 0.3) !important;
+}
+
+/* Text entry keeps the native caret and the field's own border. Painting the
+   clay ring here drew a hard red box around every input in Settings. */
+:is(input, textarea, select, [contenteditable], [contenteditable] *):focus-visible,
+[role='textbox']:focus-visible,
+[contenteditable='true']:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Fields that sit inside a card already get their focus from the card. */
+[class*='_field'] :is(input, textarea, select):focus-visible,
+[class*='_input'] :is(input, textarea, select):focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* The composer card already shows its focus through :focus-within; the inner
@@ -930,9 +1008,12 @@ body[data-ds-dark-theme] [class*='_fileCard']:hover {
 
 /* Serif everywhere: Chinese from Songti, Latin and digits from the same face
    first (Songti carries a serif Latin set), then Georgia / Times. Code keeps
-   the monospace stack through --ds-font-family-code. */
+   the monospace stack through --ds-font-family-code.
+
+   The body size is Claude's 17px baseline PLUS whatever the reader picked in
+   Settings -> Appearance; it is set on the root, next to the token block, so
+   the --dsw-font-markdown-* values resolve it instead of shadowing it. */
 body {
-  --dsh-content-font-size: 17px !important;
   font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', Georgia, 'Times New Roman', serif !important;
   --dsw-font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', Georgia, 'Times New Roman', serif !important;
   font-variant-numeric: lining-nums tabular-nums;
@@ -1207,14 +1288,15 @@ body[data-ds-dark-theme] {
   }
 }
 
-/* [class*=_card] is a SUBSTRING match, so it also selects the small cards nested
-   inside a larger card group. Lifting every one of them makes each inner block
-   float on its own and drop a shadow inside the parent card. Only the outermost
-   card lifts: the :not(...) clause excludes any card that sits inside another
-   card (CSS :not() with a complex selector, Chromium 88+). */
+/* [class*=_card] is a SUBSTRING match, so it also selects every inner box of a
+   card group (_cardContent, _cardMainRow, _cardTitle, _cardTrailing, ...) — each
+   of those class names contains "_card". Lifting on :hover made a card jump and
+   drop a shadow under the pointer, which reads as the layout twitching rather
+   than as feedback. Block-level surfaces do not lift: they are not controls.
+   The interactive bits inside (switch, button, link) keep their own states. */
 [class*='_card']:not([class*='_card'] [class*='_card']):hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 2px 4px hsl(from #0b0b0b h s l / 5%), 0 6px 16px hsl(from #0b0b0b h s l / 8%);
+  transform: none;
+  box-shadow: none;
 }
 
 body[data-ds-dark-theme] [class*='_card']:not([class*='_card'] [class*='_card']):hover {
@@ -1249,10 +1331,14 @@ body[data-ds-dark-theme] [class*='_card']:not([class*='_card'] [class*='_card'])
     color: var(--dsw-alias-label-secondary);
   }
 
+  /* Touch taps latch :hover, so any surviving tint would stick to whatever was
+     last tapped. Belt and braces: the block-level rows are already untinted. */
   [class*='_panelEntry']:hover,
   [class*='_panelRow']:hover,
-  [class*='_newSession']:hover {
-    background-color: transparent;
+  [class*='_newSession']:hover,
+  [class*='_cardContent']:hover {
+    background-color: transparent !important;
+    border-radius: var(--dsw-radius-lg) !important;
   }
 }
 
