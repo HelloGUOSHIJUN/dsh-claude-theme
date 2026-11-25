@@ -41,6 +41,14 @@ _仓库不含截图：截图会暴露真实会话标题。装好后自己看界�
 
 想恢复其中任何一项：在 **插件** 里停用本主题，然后刷新页面。
 
+## 1.2.0 预览
+
+![代码块与列表](https://github.com/HelloGUOSHIJUN/dsh-claude-theme/raw/main/docs/previews/code.png)
+
+![文件链接与普通链接](https://github.com/HelloGUOSHIJUN/dsh-claude-theme/raw/main/docs/previews/links.png)
+
+> 预览图来自主题的本地测试页（真实 Chrome 渲染），不是产品截图。
+
 ## 安装
 
 在 DeepSeek Harness 里指向本仓库或本地目录，然后刷新一次页面。
