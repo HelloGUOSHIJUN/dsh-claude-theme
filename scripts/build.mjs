@@ -19,6 +19,80 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
+// Wide-table section; kept as one template literal so the CSS text above stays literal.
+const TABLE_SECTION = `/* Wide tables. DSH breaks any table of four or more columns out of the column
+   to the transcript edges (.md-table-wide). That breakout re-declares the
+   wrapper's geometry AFTER this sheet in the cascade — module CSS is appended
+   to <head> at runtime, so it always lands later — and it is not !important.
+   With a narrower table above it in the same message, the wide one is sized
+   against the scroller rather than the column, so it comes out indented by its
+   own alignment padding: its left edge lands mid-column, past the running
+   text, which reads as a table shoved off to the right with its first columns
+   cut away.
+   Pin the breakout to the column instead: the table fills the column and wraps,
+   the frame is drawn on the <table> so a table still too wide keeps a visible
+   edge while it scrolls, and native tables (3 columns or fewer) keep the
+   host's look: centred when they fit, their own scrollbar when they do not. */
+[data-conversation-content] [class*='_tableScroll']:is(
+  .md-table-wide,
+  :has(> table > thead > tr > th:nth-child(4))
+):not([class*='_tableScroll'] [class*='_tableScroll']) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  padding-bottom: 0 !important;
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+}
+
+[data-conversation-content] [class*='_tableScroll']:is(
+  .md-table-wide,
+  :has(> table > thead > tr > th:nth-child(4))
+):not([class*='_tableScroll'] [class*='_tableScroll']) > table {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Once a managed table wraps, cells get the transcript's own side insets, may
+   wrap anywhere, and the hairlines move to the cells: nothing paints over the
+   table's rounded frame. */
+[data-conversation-content] [class*='_tableScroll']:is(
+  .md-table-wide,
+  :has(> table > thead > tr > th:nth-child(4))
+):not([class*='_tableScroll'] [class*='_tableScroll']) :is(th, td) {
+  padding-right: 16px;
+  padding-left: 16px;
+  max-width: none;
+  overflow-wrap: anywhere;
+  border: 0;
+}
+
+[data-conversation-content] [class*='_tableScroll']:is(
+  .md-table-wide,
+  :has(> table > thead > tr > th:nth-child(4))
+):not([class*='_tableScroll'] [class*='_tableScroll']) > table {
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+}
+
+[data-conversation-content] [class*='_tableScroll']:is(
+  .md-table-wide,
+  :has(> table > thead > tr > th:nth-child(4))
+) :is(th, td):not(:first-child) {
+  border-left: 1px solid var(--dsw-alias-border-l1);
+}
+
+[data-conversation-content] [class*='_tableScroll']:is(
+  .md-table-wide,
+  :has(> table > thead > tr > th:nth-child(4))
+) :is(thead th, tbody tr + tr > td) {
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+`
+
+
 // ---------------------------------------------------------------------------
 // Claude surface ladder
 // light: page #faf9f5 · rail #f0eee6 · border #e8e6dc · card #ffffff
@@ -196,7 +270,7 @@ const LIGHT = {
   '--dsw-alias-label-shimmer': 'color-mix(in srgb, #151515 30%, transparent)',
   '--dsw-alias-label-tertiary': '#898781',
   '--dsw-alias-menu-icon': '#525252',
-  '--dsw-alias-link': '#184f95',
+  '--dsw-alias-link': '#c6613f',
   '--dsw-alias-markdown-citation': '#f5f5f3',
   '--dsw-alias-markdown-code-block-banner': '#e7e6e1',
   '--dsw-alias-markdown-code-block': '#f3f1ea',
@@ -338,7 +412,7 @@ const DARK = {
   '--dsw-alias-label-shimmer': 'color-mix(in srgb, #f5f4ef 45%, transparent)',
   '--dsw-alias-label-tertiary': '#898781',
   '--dsw-alias-menu-icon': '#f0efec',
-  '--dsw-alias-link': '#6da7ec',
+  '--dsw-alias-link': '#e0895f',
   '--dsw-alias-markdown-citation': '#20201f',
   '--dsw-alias-markdown-code-block-banner': '#20201f',
   '--dsw-alias-markdown-code-block': '#0b0b0a',
@@ -727,22 +801,57 @@ button[class*='_newSession']:hover {
    Code and attachment surfaces: CDS uses a 12px rounded sandbox with a hairline
    and a quiet banner; attachment cards sit on the card surface.
    -------------------------------------------------------------------------- */
-/* Code blocks sit in a _fenceSeat wrapper (16px host margin, 11px when not
-   last) — normalise the wrapper to the transcript rhythm. */
-[data-conversation-content] [class*='_fenceSeat'] {
-  margin: 12px 0 !important;
+/* The host code block is a 12px sandbox, but its stylesheet is appended to
+   <head> at runtime, i.e. AFTER this one, and its <pre> rule is wrapped in
+   :where() so it counts as specificity 0,1,0 against our 0,2,0 — an override
+   without !important loses to it. The frame therefore restates the host's own
+   spacing and geometry: 16px padding, word wrapping, and the 10px bottom
+   corners on the <pre> itself (the banner is the box's top edge). */
+[data-conversation-content] :is(.md-code-block > [data-code-block-content], .md-code-block:not(.md-code-block .md-code-block)) > pre {
+  font: var(--dsw-font-markdown-code-block) !important;
+  padding: 6px 22px 20px !important;
+  margin: 0 !important;
+  overflow-x: auto !important;
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+  background: var(--dsw-alias-markdown-code-block) !important;
+  border-radius: 0 0 12px 12px !important;
 }
 
-.md-code-block {
-  margin: 0 !important;
+/* The banner is the code box's own top edge (the body is display:contents), so
+   it carries both corners; the host stylesheet, appended after this one, only
+   rounds it when its own variable is present. */
+[data-conversation-content] .md-code-block > pre {
+  border-radius: 0 0 12px 12px !important;
+}
+
+[data-conversation-content] .md-code-block[data-code-wrap='false'] > [data-code-block-content] > pre {
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+}
+
+/* Direct children only: the body also shows code through nested renderers
+   (the preview card embeds a full markdown tree), and those keep their own
+   surface. */
+[data-conversation-content] > .md-code-block,
+[data-conversation-content] .md-code-block:not(.md-code-block .md-code-block) {
   border: 1px solid var(--dsw-alias-border-l2) !important;
   border-radius: 12px !important;
   background: var(--dsw-alias-markdown-code-block) !important;
   box-shadow: none !important;
-  overflow: hidden !important;
+  /* The host's code body is display:contents, so the <pre> starts and ends the
+     box. Clipping the wrapper squares off the <pre>'s rounded bottom corners:
+     leave the corners to the <pre> and only paint the frame. */
+  overflow: visible !important;
 }
 
-[data-code-block-banner] {
+[data-conversation-content] > .md-code-block > pre,
+[data-conversation-content] .md-code-block:not(.md-code-block .md-code-block) > pre {
+  border-radius: 0 0 12px 12px !important;
+}
+
+/* Wrapped in :where() so the same properties below stay the last word. */
+:where([data-code-block-banner]) {
   font-size: 12px !important;
   color: var(--dsw-alias-label-tertiary) !important;
   border-bottom: 1px solid var(--dsw-alias-border-l1) !important;
@@ -754,15 +863,55 @@ button[class*='_newSession']:hover {
   background: var(--dsw-alias-bg-layer-1) !important;
 }
 
+/* Presenter attachment card (the file a turn hands back): the host draws a
+   hairline .5px border at radius-lg with a value-sized split button pinned to
+   the right, where the two halves round differently from the card. Claude's
+   card: flat 10px corners, a sand tile for the glyph, and one compact,
+   square-cornered split control whose divider is a straight hairline. */
+[data-presented-file] {
+  border: 1px solid var(--dsw-alias-border-l2) !important;
+  border-radius: 10px !important;
+  background: var(--dsw-alias-bg-layer-1) !important;
+}
+
+[data-presented-file] [class*='_fileIcon'] {
+  border-radius: 8px !important;
+  background: var(--dsw-alias-markdown-code-block) !important;
+  color: var(--dsw-alias-border-primary-new-colorprimary-new-color, #c6613f) !important;
+}
+
+[data-presented-files-row] [class*='_split'] {
+  box-sizing: border-box;
+  height: 30px !important;
+  border: 1px solid var(--dsw-alias-border-l3) !important;
+  border-radius: 8px !important;
+  overflow: visible !important;
+  background: var(--dsw-alias-bg-layer-1) !important;
+}
+
+/* Both halves sit square inside the control; the 8px radius lives on the outer
+   box, so the divider between them is a straight vertical line. The divider is
+   drawn on the chevron half and spans the control's full height. */
+[data-presented-files-row] [class*='_split'] > * {
+  border-radius: 0 !important;
+  min-height: 28px;
+  justify-content: center;
+}
+
+[data-presented-files-row] [class*='_split'] > :first-child {
+  padding-inline: 10px !important;
+}
+
+[data-presented-files-row] [class*='_split'] > :last-child {
+  position: relative;
+  padding-inline: 6px !important;
+  border-left: 1px solid var(--dsw-alias-border-l2) !important;
+}
+
 
 /* ==========================================================================
    Batch 2 — typography, markdown, actions, overlays, rail finish
    ========================================================================== */
-
-/* 1+2 · Claude's transcript size and numerals. 14px is CDS's chat body. */
-body {
-  font-variant-numeric: tabular-nums;
-}
 
 /* 3 · Markdown rhythm: 12px paragraph steps, 6px list steps, hairline rules. */
 /* One vertical rhythm for the whole transcript: 12px between text blocks,
@@ -820,6 +969,13 @@ body {
   text-decoration-thickness: 1px;
 }
 
+/* Links read in clay: the link token is the brand's terra cotta, and the file
+   mention (the inline link to a file, e.g. 清单同步为 中文文献…md) carries the
+   same colour with its glyph. The host's own dotted underline on hover stays. */
+[data-conversation-content] :is(a, [class*='_fileLink'], [class*='_fileMention'], [class*='_fileMention'] *) {
+  color: var(--dsw-alias-brand-primary-new-colorprimary-new-color) !important;
+}
+
 [data-conversation-content] :not(pre) > code {
   border-radius: 4px;
 }
@@ -829,23 +985,10 @@ body {
   margin: 12px 0 !important;
 }
 
-[data-conversation-content] table {
-  margin: 0;
-  border-collapse: separate;
-  border-spacing: 0;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-[data-conversation-content] thead {
-  background: var(--dsw-alias-markdown-code-block);
-}
-
+${TABLE_SECTION}
 [data-conversation-content] th,
 [data-conversation-content] td {
   padding: 8px 14px;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
   vertical-align: top;
 }
 
@@ -862,10 +1005,6 @@ body {
 [data-conversation-content] th:last-child,
 [data-conversation-content] td:last-child {
   padding-right: 16px;
-}
-
-[data-conversation-content] tr:last-child td {
-  border-bottom: 0;
 }
 
 /* Tooltips in the message action row flip upward: the primitive lays them out
@@ -889,9 +1028,7 @@ body {
 }
 
 /* 5 · Composer controls: CDS ghost buttons inside the card. */
-[data-composer-card] [class*='_tools'] button,
-[data-composer-card] [class*='_standardControls'] button,
-[data-composer-card] [class*='_trailing'] button {
+[data-composer-card] :is([class*='_tools'], [class*='_standardControls'], [class*='_trailing']) button {
   border-radius: 8px;
 }
 
@@ -1024,13 +1161,18 @@ body[data-ds-dark-theme] [class*='_fileCard']:hover {
   font-size: 13px;
 }
 
-/* 7 · Code banner: 32px strip, 11px language label. */
+/* 7 · Code banner: 32px strip, 11px language label. The code block box is
+   display:contents around the banner, so the banner is the box's own top edge:
+   without the bottom hairline the header band bleeds into the code surface. */
 [data-code-block-banner] {
+  box-sizing: border-box !important;
   height: 32px !important;
   min-height: 32px !important;
   padding: 0 10px !important;
   font-size: 11px !important;
+  line-height: 18px !important;
   letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--dsw-alias-border-l1) !important;
 }
 
 /* Serif everywhere: Chinese from Songti, Latin and digits from the same face
@@ -1070,18 +1212,14 @@ body {
   color: var(--dsw-alias-label-primary) !important;
 }
 
-/* CDS round-out: jump-to-latest disc, toast pill, dialog corners. */
+/* CDS round-out: jump-to-latest disc, toast pill, dialog corners.
+   The host's button is a 34px disc on the floating-fill surface. Keep the
+   button exactly as shipped (hit area and face), only adding the hairline
+   ring and the rounded shape; anything else here fights a control this theme
+   has no reason to resize. */
 [class*='_toBottom']:not([class*='_toBottomSlot']) {
-  width: 32px !important;
-  height: 32px !important;
+  corner-shape: round;
   border-radius: 999px !important;
-  border: 1px solid var(--dsw-alias-border-l2) !important;
-  background: var(--dsw-alias-button-floating-fill) !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-}
-
-[class*='_toBottom']:not([class*='_toBottomSlot']):hover {
-  background: var(--dsw-alias-button-floating-hover) !important;
 }
 
 [class*='_toast'] {
@@ -1093,19 +1231,6 @@ body {
 
 [role='dialog'] {
   border-radius: 16px !important;
-}
-
-/* CDS interaction: message actions appear on hover / keyboard focus. */
-[data-chat-turn] [class*='_actions'] {
-  color: var(--dsw-alias-label-tertiary);
-  transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-[data-chat-turn]:hover [class*='_actions'],
-[data-chat-turn]:focus-within [class*='_actions'],
-[class*='_actions']:hover,
-[class*='_actions']:focus-within {
-  color: var(--dsw-alias-label-secondary);
 }
 
 /* CDS scroll fade: 28px at both ends instead of the host's 24px. */
@@ -1209,9 +1334,10 @@ body {
     transition-timing-function: var(--claude-spring);
   }
 
-  /* Pill overshoot: chips answer a press with a short overshooting scale. */
-  [class*='_chip']:active,
-  [class*='_pill']:active {
+  /* Pill overshoot: chips answer a press with a short overshooting scale.
+     Only real controls: "chip" also appears in chipLabel / chipIcon /
+     chipCount, and scaling a label inside its chip makes the text jump. */
+  :is(button, a, [role='button'], [role='tab'], [role='option']):is([class*='_chip'], [class*='_pill']):active {
     transform: scale(0.94);
     transition: transform 300ms var(--claude-spring);
   }
@@ -1250,20 +1376,10 @@ body[data-ds-dark-theme] {
    CDS effects applied to DSH surfaces that have no Claude counterpart
    ========================================================================== */
 
-/* 1 · Status lights: 6px dots with the CDS state palette, breathing while busy. */
-[class*='_dot'],
-[class*='_statusDot'] {
-  width: 6px !important;
-  height: 6px !important;
-  border-radius: 999px !important;
-  corner-shape: round;
-  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 12%, transparent);
-}
-
-[data-chat-running] [class*='_dot'],
-[data-chat-running] [class*='_statusDot'] {
-  animation: claude-breathe 1.9s ease-in-out infinite;
-}
+/* (The old 6px "status dot" pass is gone. [class*='_dot'] also matched the
+   step glyph _step_*i3xo (a 16px slot around a check mark), and forcing it to
+   6px slashed every completed step's tick down to a dot. The host's StateDot
+   is already the CDS dot; it needs no resizing.) */
 
 /* 2 · Staggered entrance (CDS "交错入场"): list rows and menu items cascade in
    by 20ms steps instead of appearing as one block. */
@@ -1285,11 +1401,14 @@ body[data-ds-dark-theme] {
 /* 3 · Perceptual scroll fade on DSH's own scroll containers (tool output,
    code blocks). Five stops, tuned so the falloff reads smooth.
 
-   The sidebar is deliberately NOT included: its top holds the resident
-   New-chat row and the Plugins row, so a top-edge fade washes those out
-   permanently instead of hinting at scrollable content. */
-[class*='_scrollRegion'],
-[class*='_codeBody'] {
+   Anchored on the host's own markers, not on class substrings: "_scrollRegion"
+   also matches the sidebar's layout column (not a scroller) and "_codeBody"
+   matches a CSS-only, scrollbar-less container in the tool rows. The sidebar
+   is deliberately NOT included either: its top holds the resident New-chat
+   row and the Plugins row, so a top-edge fade washes those out permanently. */
+[data-conversation-content] [data-terminal][data-body],
+[data-step-process] [class*='_bodyScroll'],
+[data-turn-process] [class*='_bodyScroll'] {
   --claude-fade: 28px;
   mask-image: linear-gradient(
     to bottom,
@@ -1330,6 +1449,27 @@ body[data-ds-dark-theme] [class*='_card']:not([class*='_card'] [class*='_card'])
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
+/* Message actions: quiet tertiary icons that warm to secondary on hover or
+   keyboard focus, over CDS's 120ms curve (single source for colour, opacity and
+   the motion list that used to live in two other blocks). */
+[data-chat-turn] [class*='_actions'] {
+  color: var(--dsw-alias-label-tertiary);
+  opacity: 0.8;
+}
+
+[data-chat-turn]:hover [class*='_actions'],
+[data-chat-turn]:focus-within [class*='_actions'],
+[class*='_actions']:hover,
+[class*='_actions']:focus-within {
+  color: var(--dsw-alias-label-secondary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-chat-turn] [class*='_actions'] {
+    transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
 /* 5 · Tool rows: [data-step-process] / [data-turn-process] are CONTAINERS that
    wrap a header plus a collapsible body. DSH leaves them transparent, and they
    must stay that way: painting a background on the container fills the entire
@@ -1354,12 +1494,14 @@ body[data-ds-dark-theme] [class*='_card']:not([class*='_card'] [class*='_card'])
     box-shadow: none;
   }
 
+  /* Touch taps latch :hover. The message-action row is the one place the
+     resting colour must already be readable. */
   [data-chat-turn] [class*='_actions'] {
     color: var(--dsw-alias-label-secondary);
   }
 
-  /* Touch taps latch :hover, so any surviving tint would stick to whatever was
-     last tapped. Belt and braces: the block-level rows are already untinted. */
+  /* Any surviving tint would stick to whatever was last tapped. Belt and
+     braces: the block-level rows are already untinted. */
   [class*='_panelEntry']:hover,
   [class*='_panelRow']:hover,
   [class*='_newSession']:hover,
@@ -1451,8 +1593,6 @@ input {
     animation: none;
   }
 
-  /* Rail rows and controls answer pointer moves. */
-  [data-chat-turn] [class*='_actions'],
   [class*='_panelEntry'],
   [class*='_panelRow'],
   [role='menuitem'],

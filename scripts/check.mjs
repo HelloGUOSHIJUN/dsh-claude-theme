@@ -199,6 +199,139 @@ for (const stem of ['_body', '_list', '_item']) {
   if (bare) fail(`a bare [class*='${stem}'] rule reaches unrelated components`)
 }
 
+// --- wide tables stay pinned to the column --------------------------------
+// DSH breaks tables of 4+ columns out of the column (.md-table-wide), and its
+// own module CSS lands AFTER this sheet, so only !important wins. Without the
+// pin, a wide table that follows a narrower one comes out indented by its own
+// alignment padding: a table shoved off to the right with the first columns cut.
+const wideTables = css.match(
+  /\[data-conversation-content\] \[class\*='_tableScroll'\]:is\([^)]*\.md-table-wide[^{]*\{[^}]*\}/g,
+) ?? []
+if (wideTables.length === 0) {
+  fail('the wide-table pin is missing (4+ column tables drift right again)')
+} else {
+  const pin = wideTables.join('\n')
+  for (const decl of ['margin-left: 0 !important', 'padding-left: 0 !important', 'width: 100% !important']) {
+    if (!pin.includes(decl)) fail(`the wide-table pin does not carry "${decl}"`)
+  }
+  // The geometry must beat the host's non-important breakout, and the cells
+  // must not clip the wrapper back to the column.
+  if (/\[class\*='_tableScroll'\]:is\([^)]*\.md-table-wide[^{]*\{[^}]*overflow-x:\s*hidden/.test(css)) {
+    fail('the wide-table wrapper hides its overflow (a too-wide table becomes unreachable)')
+  }
+}
+// The table frame rides on the <table>; cells in a managed table must not paint
+// their own outer border, and no rule may clip the frame away.
+if (/\[data-conversation-content\] \.md-table-wide[^{]*\{[^}]*overflow:\s*hidden/.test(css)) {
+  fail('a rule clips managed tables (the rounded frame disappears)')
+}
+
+// --- substring selectors stay off non-control surfaces --------------------
+// The host's step glyph is `_step_1i3xo_97`; `[class*='_dot']` (no leading
+// underscore) matched it and forced every completed step's check mark down to a
+// 6px dot. A bare-attribute scan cannot tell the two apart, so the guard is:
+// the step glyph and every other non-control must never be selected by a
+// substring rule. Concretely (a) the old '_dot' rule must stay gone, (b) chip
+// and pill presses stay on real controls, (c) class substrings reach only the
+// stems that name the surfaces they were written for.
+if (/\[class\*='_dot'\](?![^}]*data-state)/.test(css) && /\[class\*='_dot'\]\s*[,{]/.test(css)) {
+  fail("a '[class*=…_dot…]' rule is back (it matches the step glyph / plain dots)")
+}
+for (const stem of ['_chip', '_pill']) {
+  for (const line of css.split('\n')) {
+    if (!line.includes(`[class*='${stem}']`)) continue
+    if (/:active/.test(line) && !/button|role='button'|role='tab'/.test(line)) {
+      fail(`${stem} press state is not limited to controls: ${line.trim()}`)
+    }
+    if (/width:|height:|scale/.test(line) && !/:active/.test(line)) {
+      fail(`${stem} is resized by a class substring: ${line.trim()}`)
+    }
+  }
+}
+// Scroll fades must ride on the host's own markers, never on substrings that
+// also name layout columns or CSS-only containers.
+if (/\[class\*='_scrollRegion'\]/.test(css) || /\[class\*='_codeBody'\]/.test(css)) {
+  fail('the scroll fade is back on class substrings (sidebar column / CSS-only code body)')
+}
+
+// --- code block keeps its rounded bottom corners --------------------------
+// The host's code body is display:contents, so the <pre> ends the box; clipping
+// the .md-code-block wrapper squares off its bottom corners.
+const codeBlock = css.match(/\n(?:\[data-conversation-content\][^{]*)?\.md-code-block[^{]*\{[^}]*\}/g) ?? []
+const clipped = codeBlock.filter((rule) => /overflow:\s*hidden/.test(rule))
+if (clipped.length > 0) fail('a code-block rule clips its wrapper (square bottom corners)')
+
+// --- code block restates the host's <pre> geometry ------------------------
+// The host stylesheet is appended to <head> AFTER this one, and its pre rule sits
+// inside :where() (specificity 0,1,0). Without an !important restatement the
+// theme's code block keeps the host's padding — and the plugin preview's
+// 22px-card padding is lost on top of that.
+const geometryRule = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(^|\n)([^{}\n@][^{}]*> pre[^{}]*)\{([^}]*)\}/g)]
+  .find((rule) => /md-code-block/.test(rule[2]) && /padding:/.test(rule[3]))
+if (!geometryRule) {
+  fail('the code <pre> geometry restatement is missing (host rules win again)')
+} else if (!/padding:[^;]*!important/.test(geometryRule[3])) {
+  fail(`the code <pre> geometry restatement is not !important: ${geometryRule[2].trim()}`)
+}
+
+// --- one declaration, one rule -------------------------------------------
+// Two rules for the same element overwrite each other's properties: the code
+// banner's first pass painted a hairline, a later pass ("32px strip") reset
+// border-bottom, and the header band bled into the code surface. Fail when a
+// selector sets the same property twice without a :where() fallback in front.
+// Same selector twice is allowed only as a media-query variant (touch /
+// reduced motion) or a deliberate :where() fallback. A duplicate inside the
+// base cascade silently resets what the earlier rule set.
+const seenDecl = new Map()
+// Comments and @keyframes carry braces of their own; blank them before scanning.
+// Media blocks are blanked too (same regex handles nesting): their rules are
+// deliberate variants, e.g. the touch fallback for the message-action colour.
+const blockRe = /@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/g
+const cssNoComments = css
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/@(?:-webkit-)?keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*\s*\}/g, '')
+  .replace(blockRe, '')
+  .replace(/@media[^{]*\{[\s\S]*$/g, '')
+for (const m of cssNoComments.matchAll(/(^|\n)([^{}\n@][^{}]*?)\{([^}]*)\}/g)) {
+  const selector = m[2].trim()
+  if (!selector || selector.startsWith(':where(') || /^\d+%$/.test(selector)) continue
+  for (const decl of m[3].split(';')) {
+    const prop = decl.split(':')[0]?.trim()
+    if (!prop) continue
+    const key = `${selector}|${prop}`
+    if (seenDecl.has(key)) {
+      fail(`"${prop}" is declared twice for "${selector}" (the later rule resets the earlier one)`)
+    }
+    seenDecl.set(key, true)
+  }
+}
+
+// --- host markers drift --------------------------------------------
+// Class stems are hash-suffixed (".md-code-block" is stable, "._step_1i3xo" is
+// not). Every hook the component layer leans on must still exist in the host
+// bundle, so a DSH upgrade cannot silently turn a rule into dead weight.
+const hooks = [
+  'data-conversation-content', 'data-composer-card', 'data-code-block-banner',
+  'data-conversation-tabs', 'data-composer-stat', 'data-testid="todo-panel"',
+  'data-chat-turn', 'data-step-process', 'data-turn-process', 'data-terminal',
+  'md-table-wide', '.md-code-block',
+]
+const host = (() => {
+  try { return readFileSync('/Applications/DeepSeek Harness.app/Contents/Resources/app.asar') } catch { return null }
+})()
+if (host === null) {
+  console.log('· host bundle not found; skipping hook scan')
+} else {
+  console.log(`· host hook scan: ${hooks.length} markers`)
+  const asString = host.toString('latin1')
+  for (const hook of hooks) {
+    const needle = hook.replace(/'/g, '"')
+    if (!asString.includes(needle) && !asString.includes(hook)) {
+      fail(`host hook ${hook} is gone from the bundle (a rule anchored on it is dead weight)`)
+    }
+  }
+}
+
 // --- docs consistency -----------------------------------------------------
 // Values quoted in the shipped docs must match what the build actually emits.
 const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
@@ -283,5 +416,8 @@ if (failures > 0) {
   console.error(`\n${failures} check(s) failed`)
   process.exit(1)
 }
-const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + 25
+// The count only needs to stay in step with the one-line guards; it is
+// hand-maintained because the assertions above are loops and conditionals.
+const FIXED_GUARDS = 35
+const total = EXPECTED.length + darkChecks.length + docChecks.length + RETIRED.length * 2 + CONTAINER_HOVER.length + FIXED_GUARDS
 console.log(`✓ ${total} checks passed (${css.length} bytes): tokens, CDS durations, docs`)

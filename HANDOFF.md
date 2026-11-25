@@ -288,3 +288,43 @@ npm publish          # 需要浏览器授权 2FA
 | 插件显示"异常" | `engines.dsh >=0.2.2-0` 的 `-0` 后缀不能丢 |
 | 某处悬停怪怪的 | 检查是不是容器加了背景，或裸 `:hover` 命中了嵌套元素 |
 | 文档和实际不符 | 跑 `npm run check`，文档一致性检查会报 |
+
+### 15. 四列以上表格偏到右边被切掉（1.1.5 修复）
+**根因**：宿主 `.X_body .md-table-wide` 的「宽表铺满正文区」规则是**运行时注入的模块 CSS**，
+排在主题之后，且没有 `!important`。同一段消息里只要先有一张窄表（无 `md-table-wide`），
+宽表的 `margin-left: calc(-1 * lead)` 就会把它推到正文中线之后，第一列出画面。
+单独一张宽表时不复现——所以别只拿一张表测试，复现需要「窄表 + 宽表」同屏。
+
+**改法**：宽表 wrapper 用 `!important` 钉回正文列（`width/max-width: 100%`、去内边距/负边距），
+单元格恢复 16px 左右内边距并允许任意换行；外框画在 `<table>` 上，竖线交给单元格画。
+
+**别再试的**：给 wrapper 加「滚动阴影 + 常驻滚动条」的渐变背景。为了左对齐去掉了 wrapper 的
+横向内边距后，滚动的内层盒子正好盖住 5px 滚动条槽位，阴影和滚动条都画不出来；
+把 `padding-bottom` 加到 16px 又会把表格下方撑开一大块空白（见 `final-ovf` 那轮的截图）。
+验证时用 `chrome-mac-arm64/Google Chrome for Testing.app` 的 `--headless=new` 截图，
+`chrome-headless-shell` 对这一组的层叠渲染和真实窗口不一致。
+
+### 16. 复查同类 bug 的方法（1.1.6）
+「宽表偏到右边」的根因是**类名子串匹配 + 宿主规则后注入**。按这两条把整个主题重新过了一遍：
+
+1. **枚举宿主真的有哪些类名**：从 `app.asar` 里抓 `Name_hash_N` 形式的类名全表，
+   看主题里每个 `[class*='_stem']` 实际会命中谁。`_chip` → `refChip` /
+   `slashChip` 就是这样撞上的；`[class*='_dot']`（无首下划线）连 `_step_1i3xo_97` 都命中，
+   把完成勾缩成 6px 小点。短模式串必须扫一遍全表，不能靠"应该不会撞"。
+2. **`display: contents` 的盒子**：宿主代码块的 `_content` 是 `contents`，外层 `overflow:hidden`
+   裁掉的是 `<pre>` 的圆角。给 `display:contents` 的容器加边框/裁切之前先想清楚"盒子到底是谁"。
+3. **同一选择器写两遍**：宿主的代码横幅有两条「横幅」规则，后一条把前一条的 `border-bottom` 重置了。
+   `check.mjs` 现在会扫"同一选择器基态重复声明"。
+4. 复现统一用 `chrome-mac-arm64/Google Chrome for Testing.app` + `--headless=new`（`chrome-headless-shell`
+   对层叠的渲染和真窗口不一致），改前取 `git show HEAD:client.js` 里内嵌的 CSS，改后取 `theme.css`，
+   同一份宿主结构页各截一张。
+
+### 17. :where() + 后注入 = 主题的普通规则必输（1.1.7）
+宿主的代码块把 `<pre>` 规则包在 `:where()` 里，权重压到 0,1,0。看似主题的 0,2,0 能赢，
+但模块 CSS 是运行时 append 到 `<head>` 末尾的——源序更晚时，同权重也会反过来赢。
+所以凡是「宿主用 :where() 包了一层」的选择器，主题要覆盖就必须**同时**：权重更高、
+或者带 `!important`，或者确认宿主那条确实更早注入。代码块标题条的 `box-sizing`、
+`<pre>` 的 padding/圆角都是这么丢的。
+
+排查手段：在复现页里把宿主 CSS 放进一段 `<script type="text/plain">`，由脚本在主题之后
+`document.head.appendChild` 插入，才和真实注入顺序一致；直接写在一个 `<style>` 里是假阳性。
