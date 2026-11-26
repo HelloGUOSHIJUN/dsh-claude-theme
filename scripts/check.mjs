@@ -388,7 +388,15 @@ guard(() => {
 const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
 const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8')
 const detail = readFileSync(new URL('../docs/DETAIL.md', import.meta.url), 'utf8')
-const releaseNotes = readFileSync(new URL('../RELEASE_NOTES.md', import.meta.url), 'utf8')
+// RELEASE_NOTES.md is gitignored: a clean checkout (CI) has no copy, so its
+// version check is skipped rather than failing the whole suite.
+const releaseNotes = (() => {
+  try {
+    return readFileSync(new URL('../RELEASE_NOTES.md', import.meta.url), 'utf8')
+  } catch {
+    return null
+  }
+})()
 const handoff = readFileSync(new URL('../HANDOFF.md', import.meta.url), 'utf8')
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 const lightBlocks = css.split('html body {').map((part) => part.split('\n}')[0])
@@ -418,7 +426,9 @@ guard(() => {
   const [major, minor] = version.split('.')
   const changelogTop = new RegExp(`^#{1,3} ${major}\\.${minor}\\.[0-9]+`, 'm')
   const claims = [
-    ['RELEASE_NOTES.md', releaseNotes.match(/dsh-theme-claude [0-9]+\.[0-9]+\.[0-9]+/)?.[0] ?? ''],
+    ...(releaseNotes === null
+      ? []
+      : [['RELEASE_NOTES.md', releaseNotes.match(/dsh-theme-claude [0-9]+\.[0-9]+\.[0-9]+/)?.[0] ?? '']]),
     ['CHANGELOG.md', changelog.match(changelogTop)?.[0] ?? ''],
     ['HANDOFF.md', handoff.match(/dsh-theme-claude@[0-9]+\.[0-9]+\.[0-9]+/)?.[0] ?? ''],
   ]
@@ -442,9 +452,17 @@ const RETIRED = [
   ['64 项', 'stale regression-guard count'],
   ['链接蓝', 'stale link colour (links are clay now)'],
 ]
+const scannedDocs = [
+  ['README.md', readme],
+  ['docs/DETAIL.md', detail],
+  ['CHANGELOG.md', changelog],
+  ['HANDOFF.md', handoff],
+  ...(releaseNotes === null ? [] : [['RELEASE_NOTES.md', releaseNotes]]),
+]
+
 guard(() => {
   for (const [stale, why] of RETIRED) {
-    for (const [name, doc] of [['README.md', readme], ['docs/DETAIL.md', detail], ['CHANGELOG.md', changelog], ['RELEASE_NOTES.md', releaseNotes], ['HANDOFF.md', handoff]]) {
+    for (const [name, doc] of scannedDocs) {
       if (doc.includes(stale)) {
         fail(`${name}: ${why} "${stale}" is still documented`)
       }
