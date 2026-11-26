@@ -38,7 +38,6 @@
     "scripts/*.mjs",
     "locale/*.json",
     "docs/*.md",
-    "docs/previews/*.png",
     "icon.svg",
     "LICENSE",
     "NOTICE.md",
