@@ -6,8 +6,6 @@
 
 > 主题不只换色，还改了几处界面。安装前请先读 [界面变化](#界面变化)。
 
-_预览图只取空白会话：真实会话的标题会暴露隐私，所以图里没有真实对话。_
-
 ## 改了什么
 
 | 层次 | 内容 |
@@ -47,8 +45,6 @@ _预览图只取空白会话：真实会话的标题会暴露隐私，所以图�
 ![插件页：在「添加插件」里输入包名](https://github.com/HelloGUOSHIJUN/dsh-claude-theme/raw/main/docs/previews/plugin-page.png)
 
 ![会话页：装好主题后的对话界面](https://github.com/HelloGUOSHIJUN/dsh-claude-theme/raw/main/docs/previews/conversation-page.png)
-
-> 截图来自空白会话，不含真实对话内容。
 
 ## 安装
 
