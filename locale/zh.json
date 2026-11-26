@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Claude 主题",
-    "description": "把 Web 界面换成 Claude 桌面端的视觉语言：暖白纸感底色、陶土橙点缀、更紧凑的圆角、更柔和的投影，以及衬线字体与 17px 正文。",
+    "description": "把 DeepSeek Harness 的 Web 界面换成 Claude 桌面端的风格：暖白纸感底色、陶土橙点缀、更小的圆角与更柔和的投影，正文用 17px 衬线字体。",
     "detail": "docs/DETAIL.md"
   }
 }

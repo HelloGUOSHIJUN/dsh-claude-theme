@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Claude theme",
-    "description": "Repaints the Web UI in the Claude desktop palette: warm paper surfaces, clay accents, compact corners, softer elevation, plus serif typography at 17px.",
+    "description": "Turns the DeepSeek Harness Web UI into Claude's desktop look: warm paper surfaces, clay accents, tighter corners and softer elevation, with 17px serif body text.",
     "detail": "docs/DETAIL.md"
   }
 }
