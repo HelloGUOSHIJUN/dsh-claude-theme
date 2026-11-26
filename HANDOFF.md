@@ -1,6 +1,6 @@
 # dsh-claude-theme 项目交接说明
 
-> 最后更新：2026-11-24
+> 最后更新：2026-11-26
 > 仓库：https://github.com/HelloGUOSHIJUN/dsh-claude-theme
 > 本地：`~/Desktop/DeepSeek Harness/dsh-claude-theme`
 
@@ -19,13 +19,14 @@
 | 项目 | 状态 |
 |---|---|
 | GitHub 仓库 | ✅ 已推送，main 分支 |
-| 版本 tag | ✅ `v1.0.0` |
+| 当前版本 | ✅ **1.2.1**（`package.json` 是唯一版本源） |
+| 版本 tag | ✅ `v1.2.0`（可用 tag：v1.0.0 / v1.1.3 / v1.1.4 / v1.2.0） |
 | GitHub Release | ✅ 已发布（中文说明） |
-| 回归检查 | ✅ 64 项全过 |
-| npm 发布 | ✅ `dsh-theme-claude@1.0.0` — https://www.npmjs.com/package/dsh-theme-claude |
+| 回归检查 | ✅ 24 组守卫全过（数字由 `check.mjs` 自己打印） |
+| npm 发布 | ⏳ 待发布 `dsh-theme-claude@1.2.1` — https://www.npmjs.com/package/dsh-theme-claude |
 | 插件市场收录 | ⏳ PR #18259 待合并 — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/18259 |
 | GitHub topics | ✅ 10 个（dsh / dsh-plugin / theme / claude 等） |
-| 截图 | ⬜ 无（会暴露真实会话标题） |
+| 截图 | ✅ 有（空白会话截图，`docs/previews/`） |
 
 ---
 
@@ -36,7 +37,7 @@
 | `scripts/build.mjs` | **唯一源头**（1422 行） | 令牌表 + 组件规则，改这里 |
 | `theme.css` | 产物（1316 行） | **自动生成，不要手改** |
 | `client.js` | 产物，内嵌 CSS | **自动生成，不要手改** |
-| `scripts/check.mjs` | 回归守卫（300 行，64 项） | 改完必跑 |
+| `scripts/check.mjs` | 回归守卫（注册式计数，跑完打印真实组数） | 改完必跑 |
 | `README.md` | 中文说明 | 含「界面变化」章节 |
 | `CHANGELOG.md` | 中文更新日志 | 已被检查覆盖 |
 | `docs/DETAIL.md` | 插件面板详情页 | 原本就是中文 |
@@ -79,7 +80,7 @@ git push origin main
 
 ---
 
-## 64 项检查覆盖什么
+## 检查覆盖什么（当前 24 组，以脚本输出为准）
 
 1. **令牌取值** — 亮色/暗色两套关键令牌不能丢
 2. **CDS 5 阶时长标尺** — 任何动画时长必须是 60/120/200/300/450ms
@@ -90,7 +91,15 @@ git push origin main
 7. **输入框焦点回归**（1.1.1 新增）— 文本输入类控件不得画焦点环
 8. **列表行悬停回归**（1.1.1 新增）— 必须用暖色别名令牌 + 圆角，选中行优先，触屏不保留
 
+9. **任务面板间距** — 面板 body 底部 12px、dock 与输入框正 8px、不得裸匹配 `_body` / `_list` / `_item`
+10. **宽表钉列** — 宽表 wrapper 必须带三条 `!important`，且不得裁掉横向滚动
+11. **代码块** — `.md-code-block` 不得裁切；`<pre>` 几何重述必须存在且带 `!important`
+12. **重复声明** — 同一选择器不得基态重复声明同一属性
+13. **宿主钩子漂移** — 组件层依赖的 12 个 `data-*` / 类名主干必须还在 bundle 里
+
 **这些守卫都做过负向测试**，确认能真抓到问题，不是摆设。
+
+**计数方式**：每个断言前调用 `entry()`（或包在 `guard(() => …)` 里），跑完打印的就是实际执行组数。以前用手写的 `FIXED_GUARDS` 常数累加，文档里的 64 就是这么和实际漂开的。
 
 ---
 
@@ -225,8 +234,9 @@ Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`�
 | 主文字 | `#0b0b0b` | `#f0efec` |
 | 次文字 | `#52514e` | `#c3c2b7` |
 | 弱文字 | `#898781` | `#898781` |
-| 陶土橙 | `#c6613f` | `#d97757` |
-| 链接蓝 | `#2a78d6` | `#6da7ec` |
+| 陶土橙（按钮、焦点环） | `#c6613f` | `#d97757` |
+| 链接 / 文件链接 | `#c6613f` | `#e0895f` |
+| 选区（暖蓝） | `#2a78d6` | `#6da7ec` |
 
 来源：[open-claude-ui](https://github.com/Caho1/open-claude-ui)（MIT）v4 取证报告。
 **注意**：`--cds-clay-emphasized` 官方是 `#c6613f`，早期文档写的 `#cc5a36` 是错的。
@@ -235,7 +245,7 @@ Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`�
 
 ## npm 发布（已完成）
 
-**已发布：`dsh-theme-claude@1.0.0`**
+**已发布：`dsh-theme-claude@1.2.0`；待发布：`dsh-theme-claude@1.2.1`**（历史版本见 npm versions 列表；本地 tag：v1.0.0 / v1.1.3 / v1.1.4 / v1.2.0）
 https://www.npmjs.com/package/dsh-theme-claude
 
 安装：`dsh plugin add dsh-theme-claude`
@@ -274,7 +284,9 @@ npm publish          # 需要浏览器授权 2FA
 ## 还没做的（可选）
 
 - **截图** — 可以用空白会话截图，就没有隐私问题
-- **npm 发布** — 见上
+- **截图** — 可以用空白会话截图，就没有隐私问题
+- **插件市场收录** — PR #18259 待合并
+- **截图** — 目前只有 `docs/previews/` 里的本地测试页渲染图
 - **CDS 3.0 完整还原** — `@property` 滚动渐隐、55 项关键帧、`data-mode` 三态作用域。
   这些需要 DSH 暴露宿主容器支持，**当前做不到，不建议硬追**。
 
@@ -287,7 +299,7 @@ npm publish          # 需要浏览器授权 2FA
 | 样式没生效 | 刷新页面（⌘R） |
 | 插件显示"异常" | `engines.dsh >=0.2.2-0` 的 `-0` 后缀不能丢 |
 | 某处悬停怪怪的 | 检查是不是容器加了背景，或裸 `:hover` 命中了嵌套元素 |
-| 文档和实际不符 | 跑 `npm run check`，文档一致性检查会报 |
+| 文档和实际不符 | 跑 `npm run check`，文档一致性检查会报；版本号也以 `package.json` 为准 |
 
 ### 15. 四列以上表格偏到右边被切掉（1.1.5 修复）
 **根因**：宿主 `.X_body .md-table-wide` 的「宽表铺满正文区」规则是**运行时注入的模块 CSS**，
