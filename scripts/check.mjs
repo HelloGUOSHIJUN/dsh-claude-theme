@@ -27,6 +27,8 @@ const EXPECTED = [
 
 const darkChecks = [
   ['--dsw-alias-bg-base: #151515', 'dark canvas'],
+  ['--dsw-alias-label-caption: #898781', 'dark muted matches the light ramp'],
+  ['--dsw-alias-markdown-code-block: #0b0b0b', 'dark code surface on the grey ramp'],
   ['--dsw-alias-label-primary: #f0efec', 'dark primary text'],
   ['--dsw-alias-label-secondary: #c3c2b7', 'dark secondary text'],
   ['--dsw-specific-sidebar-fill: #0b0b0b', 'dark rail surface'],
@@ -106,7 +108,220 @@ guard(() => {
   }
 })
 
-// --- focus ring stays off text entry --------------------------------------
+// --- body leading follows the reader's size -------------------------------
+// The transcript baseline is 17px. The host's fixed 21px leading put that at
+// 1.24, which reads cramped for CJK prose, and the ratio drifted to 1.21 when
+// the reader picked 19px. The leading must come from the size variable, not
+// from a px offset that only pretends to scale. Any multiplier at or above
+// 1.45 is fine; the guard rejects a fixed px value and a ratio that is too
+// tight, so the number stays tunable without reopening the bug.
+const rootLeading = css.match(
+  /^html \{[^}]*--dsh-content-line-height:\s*calc\(var\(--dsh-content-font-size\)\s*\*\s*([0-9.]+)\)/m,
+)?.[1]
+guard(() => {
+  const ratio = Number(rootLeading)
+  if (!rootLeading || Number.isNaN(ratio)) {
+    fail('--dsh-content-line-height must be calc(var(--dsh-content-font-size) * <ratio>) on html')
+  } else if (ratio < 1.45) {
+    fail(`--dsh-content-line-height ratio is ${ratio}; CJK prose needs at least 1.45`)
+  }
+  for (const token of ['base', 'base-strong', 'base-italic']) {
+    const value = css.match(new RegExp(`--dsw-font-markdown-${token}:\\s*([^;]+);`))?.[1] ?? ''
+    if (!value.includes('var(--dsh-content-line-height)')) {
+      fail(`--dsw-font-markdown-${token} must read --dsh-content-line-height, not a fixed px leading`)
+    }
+  }
+})
+
+// --- skeleton: two clocks, one cascade ------------------------------------
+// CDS 3.0 keeps breathe (2s ease-in-out) and the 105° sweep band (2s linear)
+// as separate mechanisms; merging them into one animation is the misread v4
+// §3.3.4 calls out. Wave mode steps each block 90ms behind the previous one.
+// The host nests skeletonRow / skeletonBars / skeletonCard wrappers, so the
+// animation must stay on leaf blocks or the opacity dip doubles.
+const skeletonBlock = css.split('/* 6 · Skeleton: CDS 3.0')[1]?.split('@keyframes claude-skeleton-sweep')[0] ?? ''
+guard(() => {
+  if (!skeletonBlock) {
+    fail('the skeleton block is missing')
+    return
+  }
+  if (!skeletonBlock.includes('animation: claude-skeleton-breathe 2s ease-in-out infinite;')) {
+    fail('skeleton breathe must be 2s ease-in-out')
+  }
+  if (!skeletonBlock.includes('animation: claude-skeleton-sweep 2s linear infinite;')) {
+    fail('skeleton sweep must be its own 2s linear animation')
+  }
+  if (!skeletonBlock.includes('::after')) {
+    fail('skeleton sweep must be a separate ::after band')
+  }
+  if (!skeletonBlock.includes('linear-gradient(105deg, transparent 35%, var(--claude-skeleton-sheen) 50%, transparent 65%)')) {
+    fail('skeleton sweep must use the CDS 105deg gradient')
+  }
+  if (!skeletonBlock.includes('animation-delay: 90ms')) {
+    fail('skeleton wave cascade lost its 90ms step')
+  }
+  if (!/\[class\*='_skeleton'\]:not\(:has\(\[class\*='_skeleton'\]\)\)/.test(skeletonBlock)) {
+    fail('skeleton motion must target leaf blocks only (wrappers would double the dip)')
+  }
+  if (!/@keyframes claude-skeleton-breathe/.test(css) || !/50%\s*\{\s*opacity:\s*0\.6/.test(css.split('@keyframes claude-skeleton-breathe')[1]?.split('@keyframes claude-skeleton-sweep')[0] ?? '')) {
+    fail('skeleton breathe keyframes must dip to 0.6 at 50%')
+  }
+  if (css.includes('claude-sheen')) {
+    fail('the old claude-sheen animation still exists')
+  }
+})
+
+
+// --- scroll fade follows the scroll position ------------------------------
+// CDS 3.0 animates two @property lengths from the container's own scroll
+// timeline: 28px while there is content past that edge, 0 at the edge. A
+// constant mask clips the first/last line of a three-line output, which is the
+// bug this guard exists to prevent.
+const fadeBlock = css.split('/* 3 · Scroll fade')[1]?.split('/* 4 · Cards answer')[0] ?? ''
+guard(() => {
+  if (!fadeBlock) {
+    fail('the scroll fade block is missing')
+    return
+  }
+  for (const name of ['top', 'bottom']) {
+    const prop = css.match(new RegExp(`@property --claude-scroll-fade-${name}\\s*\\{[^}]*\\}`))?.[0] ?? ''
+    if (!prop.includes("syntax: '<length>'") || !prop.includes('initial-value: 0px')) {
+      fail(`--claude-scroll-fade-${name} must be a registered <length> starting at 0`)
+    }
+  }
+  if (!fadeBlock.includes('animation-timeline: scroll(self), scroll(self);')) {
+    fail('scroll fade is not driven by the container scroll timeline')
+  }
+  if (!fadeBlock.includes('animation-range: 0 28px, calc(100% - 28px) 100%;')) {
+    fail('scroll fade ranges must pin 28px at each edge')
+  }
+  for (const name of ['top', 'bottom']) {
+    if (!fadeBlock.includes(`var(--claude-scroll-fade-${name})`)) {
+      fail(`the mask no longer reads --claude-scroll-fade-${name}`)
+    }
+  }
+  if (fadeBlock.includes('--claude-fade: 28px')) {
+    fail('the old constant fade mask is back')
+  }
+})
+
+// --- segmented control: 1px inset, hairline thumb -------------------------
+// CDS puts the thumb 1px inside the track and gives it a 0.5px inset ring plus
+// two diffusion shadows; a flat 2px inset with a single shadow reads heavier.
+const tabTrack = css.split('[data-conversation-tabs] {')[1]?.split('\n}')[0] ?? ''
+const tabSelected = css.split("[data-conversation-tabs] > [role='tab'][aria-selected='true'] {")[1]?.split('\n}')[0] ?? ''
+const tabDark = css.split("body[data-ds-dark-theme] [data-conversation-tabs] > [role='tab'][aria-selected='true'] {")[1]?.split('\n}')[0] ?? ''
+guard(() => {
+  if (!/padding:\s*1px !important/.test(tabTrack)) {
+    fail('segmented track must use the CDS 1px inset')
+  }
+  if (!tabSelected.includes('inset 0 0 0 var(--claude-ring)')) {
+    fail('segmented thumb lost its hairline ring')
+  }
+  if (!tabSelected.includes('0 2px 6px -1px')) {
+    fail('segmented thumb lost its second diffusion shadow')
+  }
+  if (!tabDark.includes('inset 0 0 0 var(--claude-ring)') || !tabDark.includes('0 2px 6px -1px')) {
+    fail('segmented thumb lost the dark hairline ring or second shadow')
+  }
+})
+
+// --- retina hairline -------------------------------------------------------
+// CDS ring width is 1px at 1x, 0.5px at 2dppx, 1/3px at 3dppx. Key boxes
+// (code blocks, file cards, attachment cards, wide tables, composer, segmented
+// thumb) must read the token, so a 1px border never survives on Retina.
+guard(() => {
+  if (!/html \{\s*--claude-ring: 1px;/.test(css)) {
+    fail('--claude-ring must start at 1px on the root')
+  }
+  if (!/@media[^{]*2dppx[^{]*\{[^}]*--claude-ring: 0\.5px/.test(css)) {
+    fail('--claude-ring must drop to 0.5px at 2dppx')
+  }
+  if (!/3dppx[^{]*\{[^}]*--claude-ring: calc\(1px \/ 3\)/.test(css)) {
+    fail('--claude-ring must drop to 1/3px at 3dppx')
+  }
+  if (!css.includes('inset 0 0 0 var(--claude-ring) var(--dsw-alias-border-l2)')) {
+    fail('composer / thumbnail rings do not read --claude-ring')
+  }
+  if (!/::after \{[^}]*box-shadow: inset 0 0 0 var\(--claude-ring\)/.test(css)) {
+    fail('the code/card/table frame lost its overlay hairline')
+  }
+})
+
+// --- dark typography compensation ----------------------------------------
+// White on black irradiates; CDS drops 30-40 wght ticks in dark mode. The
+// serif stack has no axis, so the 500 baseline steps to 400. Code must never
+// inherit the 0.12px text stroke (it blurs 12px glyphs).
+guard(() => {
+  if (!/body\[data-ds-dark-theme\] \{\s*font-weight: 400;/.test(css)) {
+    fail('dark body weight must drop to 400')
+  }
+  if (!/pre, code, kbd, samp \{\s*-webkit-text-stroke: 0 !important;/.test(css)) {
+    fail('code still inherits the text stroke')
+  }
+})
+
+// --- one press for every control -----------------------------------------
+// CDS squish is 0.975 with the 15-stop spring on release and 60ms ease-out
+// while held. The old 0.94 / 0.96 / 0.985 one-offs must not come back.
+guard(() => {
+  if (!css.includes('--claude-press: 0.975;')) {
+    fail('--claude-press must be 0.975')
+  }
+  if (!css.includes('transform: scale(var(--claude-press));')) {
+    fail('controls do not read --claude-press')
+  }
+  for (const stale of ['scale(0.94)', 'scale(0.96)', 'scale(0.985)']) {
+    if (css.includes(stale)) fail(`stale press scale ${stale}`)
+  }
+  if (!css.includes('transition: transform 60ms ease-out;')) {
+    fail('pressed controls must transition in 60ms ease-out')
+  }
+})
+
+// --- segmented control collapses by container width ----------------------
+// CDS switches at 254px (three items) and 180px (two items). DSH tabs have no
+// icon to fall back to, so the theme tightens padding instead of hiding text,
+// but the container-driven switch must still exist.
+guard(() => {
+  if (!css.includes('container-type: inline-size;')) {
+    fail('the tab row is not a size container')
+  }
+  for (const width of ['@container (width <= 254px)', '@container (width <= 180px)']) {
+    if (!css.includes(width)) fail(`missing ${width}`)
+  }
+})
+
+// --- menu entrance never changes scroll height ----------------------------
+// A translated menu row extends the popup's scrollable overflow for the
+// length of the entrance, so a menu whose content fits flashes a scrollbar
+// and then widens when it disappears. Even a fade makes the top rows read as
+// a flash, so menus have no entrance animation at all; text appears in place.
+guard(() => {
+  if (!/\[data-menu-phase='enter'\] > \*\s*\{\s*animation: none !important;/.test(css)) {
+    fail('menu enter animation is back (the text flashes)')
+  }
+  if (css.includes('claude-fade-in')) {
+    fail('menu rows must not fade in; they open with their text in place')
+  }
+  if (/\[role='(?:menuitem|menuitemradio|menuitemcheckbox|option)'\][^{}]*\{[^}]*claude-rise/.test(css)) {
+    fail('menu rows still rise (the popup scrollbar flashes)')
+  }
+  if (!css.includes('animation: claude-rise 120ms cubic-bezier(0.22, 1, 0.36, 1) both;')) {
+    fail('panel/hero rows lost the rise entrance')
+  }
+})
+
+// --- model chip matches the permission chip ------------------------------
+// The two triggers are siblings in the composer tool row; the host ships
+// 400 for the model label and 500 for the permission label. They must read
+// as one control family.
+guard(() => {
+  if (!/\[data-composer-card\] button\[class\*='_trigger'\] \{\s*font-weight: 500;/.test(css)) {
+    fail('the model trigger no longer matches the permission trigger weight')
+  }
+})
+
 // The global :focus-visible ring drew a hard clay rectangle around every input
 // in Settings, which reads as an error state. Text entry must be excluded.
 const focusResetBlock = css.match(
@@ -125,6 +340,51 @@ guard(() => {
   // Cards that already express focus must not paint a second ring.
   if (!/\[class\*='_field'\] :is\(input, textarea, select\):focus-visible/.test(css)) {
     fail('fields inside a card still draw their own focus ring')
+  }
+})
+
+// --- import trigger matches the New session fill -------------------------
+// The DeepSeek-import trigger sits as the square twin of New session. It
+// always paints the elevated fill, while New session switches to the macOS
+// sidebar glass tokens; on darwin the two would read as different materials.
+guard(() => {
+  if (!/html\[data-platform='darwin'\] body \[class\*='_newSessionRow'\] button\[class\*='_wide'\] \{\s*background: var\(--dsw-specific-sidebar-glass-fill\) !important;/.test(css)) {
+    fail('the import trigger no longer matches the New session glass fill')
+  }
+  if (!/html\[data-platform='darwin'\] body \[class\*='_newSessionRow'\] button\[class\*='_wide'\]:hover,\s*\nhtml:not\(\[data-platform='darwin'\]\) body \[class\*='_newSessionRow'\] button\[class\*='_wide'\]:hover \{\s*background: transparent !important;/.test(css)) {
+    fail('the import trigger keeps a hover tint while New session has none')
+  }
+})
+
+// --- menu rows keep the host's hover fill, not a clay ring ----------------
+// DSH moves real focus onto the row under the pointer (the model picker calls
+// item.focus() from onMouseMove, and Chromium reports that row as
+// :focus-visible). The global ring then follows the cursor as a clay frame
+// around whichever model is hovered — in light mode it reads as a red error
+// border on the selection list. The host already fills :focus-visible rows with
+// the hover wash, so the theme must not paint a second ring there.
+const menuFocusReset = css.match(
+  /body :is\([^)]*\[role='menuitem'\][^)]*\):focus-visible\s*\{[^}]*\}/,
+)?.[0] ?? ''
+guard(() => {
+  if (!css.includes('0 0 0 1.5px #c6613f')) {
+    fail('the discrete-control focus ring disappeared entirely')
+  }
+  if (!menuFocusReset) {
+    fail('the menu-row focus reset is missing (a clay frame follows the pointer in the model picker)')
+    return
+  }
+  if (!/box-shadow:\s*none !important/.test(menuFocusReset)) {
+    fail('the menu-row focus reset does not clear box-shadow')
+  }
+  for (const role of ['menuitemradio', 'menuitemcheckbox', 'option', 'treeitem']) {
+    if (!menuFocusReset.includes(`[role='${role}']`)) {
+      fail(`the menu-row focus reset does not cover ${role}`)
+    }
+  }
+  const darkRing = css.indexOf('body[data-ds-dark-theme] :focus-visible')
+  if (darkRing < 0 || css.indexOf(menuFocusReset) < darkRing) {
+    fail('the menu-row focus reset must follow the dark-scheme ring (otherwise the dark ring wins)')
   }
 })
 
@@ -331,14 +591,15 @@ guard(() => {
 // base cascade silently resets what the earlier rule set.
 const seenDecl = new Map()
 // Comments and @keyframes carry braces of their own; blank them before scanning.
-// Media blocks are blanked too (same regex handles nesting): their rules are
-// deliberate variants, e.g. the touch fallback for the message-action colour.
-const blockRe = /@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/g
+// Media and @container blocks are blanked too (same regex handles nesting):
+// their rules are deliberate variants, e.g. the touch fallback for the
+// message-action colour or the narrow-tab padding.
+const blockRe = /@(?:media|container)[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/g
 const cssNoComments = css
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/@(?:-webkit-)?keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*\s*\}/g, '')
   .replace(blockRe, '')
-  .replace(/@media[^{]*\{[\s\S]*$/g, '')
+  .replace(/@(?:media|container)[^{]*\{[\s\S]*$/g, '')
 guard(() => {
   for (const m of cssNoComments.matchAll(/(^|\n)([^{}\n@][^{}]*?)\{([^}]*)\}/g)) {
     const selector = m[2].trim()
@@ -494,6 +755,15 @@ guard(() => {
       fail(`unguarded card hover (nested cards float) -> ${line.trim()}`)
     }
   }
+  // A shadow on a _card hover lights up the whole _cards slab: :hover also
+  // matches an ancestor while the pointer is over one card. Block-level
+  // surfaces stay flat in both schemes.
+  for (const m of outsideHoverNone.matchAll(/\[class\*='_card'\][^{]*:hover[^{]*\{([^}]*)\}/g)) {
+    const shadow = m[1].match(/box-shadow:\s*([^;}]+)/)?.[1]?.trim()
+    if (shadow !== undefined && shadow !== 'none') {
+      fail(`card hover paints a box-shadow (${shadow}); the _cards slab lights up under the pointer`)
+    }
+  }
 })
 
 // The sidebar carries resident rows (New chat, Plugins) at its top, so a
@@ -502,6 +772,26 @@ guard(() => {
   if (/\[data-sidebar-scrollport\]/.test(css.split("mask-image")[0] + (css.match(/(?:^|[\s,{])\[data-sidebar-scrollport\][^{]*\{[^}]*mask-image/) || [""])[0])) {
         fail('[data-sidebar-scrollport] must not carry a mask-image fade')
       }
+})
+
+// --- popup material follows the warm menu colour -------------------------
+// The host's --dsw-menu-surface-fill default is a cool blue-grey (#303136 at
+// 64% in dark), so an unthemed popup reads native-blue. It must derive from
+// the theme's own menu colour.
+guard(() => {
+  if (!/--dsw-menu-surface-fill:\s*color-mix\(in srgb, var\(--dsw-specific-menu\)[^;]*!important;/.test(css)) {
+    fail('menu surface falls back to the host cool-grey fill (popups read native-blue)')
+  }
+})
+
+// --- document selection uses the theme wash ------------------------------
+// The transcript selection is clay; the document-preview selection token is a
+// separate native blue and must follow the same wash.
+guard(() => {
+  if (!css.includes('--dsw-alias-bg-document-selection: color-mix(in srgb, #c6613f 22%, transparent)')
+    || !css.includes('--dsw-alias-bg-document-selection: color-mix(in srgb, #d97757 30%, transparent)')) {
+    fail('document-preview selection still uses the native blue')
+  }
 })
 
 if (failures > 0) {

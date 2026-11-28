@@ -1,6 +1,6 @@
 # dsh-claude-theme 项目交接说明
 
-> 最后更新：2026-11-26
+> 最后更新：2026-11-29
 > 仓库：https://github.com/HelloGUOSHIJUN/dsh-claude-theme
 > 本地：`~/Desktop/DeepSeek Harness/dsh-claude-theme`
 
@@ -19,11 +19,11 @@
 | 项目 | 状态 |
 |---|---|
 | GitHub 仓库 | ✅ 已推送，main 分支 |
-| 当前版本 | ✅ **1.2.1**（`package.json` 是唯一版本源） |
-| 版本 tag | ✅ `v1.2.0`（可用 tag：v1.0.0 / v1.1.3 / v1.1.4 / v1.2.0） |
+| 当前版本 | ✅ **1.3.0**（`package.json` 是唯一版本源） |
+| 版本 tag | ✅ `v1.3.0`（可用 tag：v1.0.0 / v1.1.3 / v1.1.4 / v1.2.0 / v1.2.1 / v1.3.0） |
 | GitHub Release | ✅ 已发布（中文说明） |
-| 回归检查 | ✅ 24 组守卫全过（数字由 `check.mjs` 自己打印） |
-| npm 发布 | ⏳ 待发布 `dsh-theme-claude@1.2.1` — https://www.npmjs.com/package/dsh-theme-claude |
+| 回归检查 | ✅ 全部守卫通过（组数以 `check.mjs` 输出为准） |
+| npm 发布 | ✅ 已发布 `dsh-theme-claude@1.3.0` — https://www.npmjs.com/package/dsh-theme-claude |
 | 插件市场收录 | ⏳ PR #18259 待合并 — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/18259 |
 | GitHub topics | ✅ 10 个（dsh / dsh-plugin / theme / claude 等） |
 | 截图 | ✅ 有（空白会话截图，`docs/previews/`） |
@@ -34,8 +34,8 @@
 
 | 文件 | 作用 | 注意 |
 |---|---|---|
-| `scripts/build.mjs` | **唯一源头**（1422 行） | 令牌表 + 组件规则，改这里 |
-| `theme.css` | 产物（1316 行） | **自动生成，不要手改** |
+| `scripts/build.mjs` | **唯一源头**（1718 行） | 令牌表 + 组件规则，改这里 |
+| `theme.css` | 产物（1605 行） | **自动生成，不要手改** |
 | `client.js` | 产物，内嵌 CSS | **自动生成，不要手改** |
 | `scripts/check.mjs` | 回归守卫（注册式计数，跑完打印真实组数） | 改完必跑 |
 | `README.md` | 中文说明 | 含「界面变化」章节 |
@@ -80,13 +80,13 @@ git push origin main
 
 ---
 
-## 检查覆盖什么（当前 24 组，以脚本输出为准）
+## 检查覆盖什么（组数以脚本输出为准）
 
 1. **令牌取值** — 亮色/暗色两套关键令牌不能丢
 2. **CDS 5 阶时长标尺** — 任何动画时长必须是 60/120/200/300/450ms
 3. **文档一致性** — README/DETAIL/CHANGELOG 写的值必须和产物一致
 4. **容器悬停回归** — 容器不能加 hover 背景（会溢出圆角）
-5. **嵌套卡片回归** — `[class*='_card']:hover` 必须带 `:not()` 守卫
+5. **嵌套卡片回归** — `[class*='_card']:hover` 必须带 `:not()` 守卫，且不得带投影（`:hover` 会命中祖先，`_cards` 容器会整块被点亮）
 6. **字号设置回归**（1.1.0 新增）— `--dsh-content-font-size` 必须保留 delta 接线，且不能落在 `body` 上
 7. **输入框焦点回归**（1.1.1 新增）— 文本输入类控件不得画焦点环
 8. **列表行悬停回归**（1.1.1 新增）— 必须用暖色别名令牌 + 圆角，选中行优先，触屏不保留
@@ -96,6 +96,20 @@ git push origin main
 11. **代码块** — `.md-code-block` 不得裁切；`<pre>` 几何重述必须存在且带 `!important`
 12. **重复声明** — 同一选择器不得基态重复声明同一属性
 13. **宿主钩子漂移** — 组件层依赖的 12 个 `data-*` / 类名主干必须还在 bundle 里
+14. **菜单行焦点回归**（1.3.0）— 菜单/列表行不得画主题焦点环，DSH 会把焦点移到指针所在行，画环就变成跟鼠标走的红框
+15. **正文行高**（1.3.0）— 行高必须由 `--dsh-content-font-size` 推导（倍数 ≥1.45），三个 base 令牌不得写死 px
+16. **骨架屏动效**（1.3.0）— 呼吸 2s `ease-in-out` + 90ms 级联，扫光独立 2s `linear`、105°，只作用于叶子块
+17. **滚动渐隐**（1.3.0）— 必须由容器自己的 `scroll(self)` 时间轴驱动两个 `@property` 长度，两端归零；不得退回常驻 mask
+18. **分段控件**（1.3.0）— 轨道 1px 内缩，选中态发丝内环（`--claude-ring`）+ 双层投影，暗色单独给值
+19. **Retina 发丝边**（1.3.0）— `--claude-ring` 按 2x/3x 降宽；关键盒子用 `::after` 覆盖环（border 会被进位，内阴影会被通栏子元素盖住）
+20. **暗色字重**（1.3.0）— 暗色正文 400，代码不继承描边
+21. **按压弹簧**（1.3.0）— 全部控件 `--claude-press` 0.975，按下 60ms ease-out，回弹 450ms 弹簧；不得再出现 0.94/0.96/0.985
+22. **分段容器查询**（1.3.0）— 标签行 inline-size 容器，254px / 180px 两档压缩；宿主无图标，不隐藏文字
+23. **菜单入场**（1.3.0）— 弹出菜单不得有入场动画（`translateY` 会撑大 `scrollHeight` 闪滚动条，淡入又会让前两排闪）；进入态直接显示文字，退场保留
+24. **模型/权限一致性**（1.3.0）— 菜单打开即显示文字，无入场动画；模型触发器字重 500，与权限触发器对齐
+25. **导入按钮与新建会话同色**（1.3.0）— macOS 宽列导入按钮读 `--dsw-specific-sidebar-glass-fill`；悬停与新会话一样不铺底色，收起成轨道图标时透明
+26. **菜单材质**（1.3.0）— `--dsw-menu-surface-fill` 必须从 `--dsw-specific-menu` 派生，不能落回宿主的冷蓝灰默认；宿主默认值也写在 body 上，覆盖要用 `html body` + `!important`
+27. **文档预览选区**（1.3.0）— `--dsw-alias-bg-document-selection` 必须跟正文 `::selection` 同一陶土洗色，不能留原生蓝
 
 **这些守卫都做过负向测试**，确认能真抓到问题，不是摆设。
 
@@ -198,7 +212,7 @@ Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`�
 
 ### 10. `:focus-visible` 一刀切会给输入框画红框（1.1.1 修复）
 全局焦点环对被聚焦的文本框打 1.5px 陶土橙描边，观感像报错。
-**已修复**：文本输入类控件排除在外，只给按钮/链接/菜单项画环。
+**已修复**：文本输入类控件排除在外，只给按钮/链接/标签页这类离散控件画环；菜单/列表行不画环，改用宿主的焦点底色（见第 14 条守卫）。
 
 ### 8. 字号变量不能定义在使用它的同一个节点上（1.1.0 修复）
 `--dsh-content-font-size` 要挂在 `html`，不能挂在 `body`。
@@ -219,7 +233,7 @@ Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`�
 - **输入框状态行隐藏** — `[data-composer-stat] { display:none }`
 - **视图标签变 999px 胶囊**
 - **消息操作 tooltip 上翻**
-- **最外层卡片悬停上浮** — 保留，只是排除了嵌套卡片
+- **卡片悬停** — 亮暗都不上浮、不投影；`_cards` 这类板块容器更不该响应
 
 ---
 
@@ -245,7 +259,7 @@ Host 下发的插件 bundle 带缓存头 `public, max-age=31536000, immutable`�
 
 ## npm 发布（已完成）
 
-**已发布：`dsh-theme-claude@1.2.0`；待发布：`dsh-theme-claude@1.2.1`**（历史版本见 npm versions 列表；本地 tag：v1.0.0 / v1.1.3 / v1.1.4 / v1.2.0）
+**已发布：`dsh-theme-claude@1.3.0`**（历史版本见 npm versions 列表；本地 tag：v1.0.0 / v1.1.3 / v1.1.4 / v1.2.0 / v1.2.1 / v1.3.0）
 https://www.npmjs.com/package/dsh-theme-claude
 
 安装：`dsh plugin add dsh-theme-claude`
@@ -287,8 +301,9 @@ npm publish          # 需要浏览器授权 2FA
 - **截图** — 可以用空白会话截图，就没有隐私问题
 - **插件市场收录** — PR #18259 待合并
 - **截图** — 目前只有 `docs/previews/` 里的本地测试页渲染图
-- **CDS 3.0 完整还原** — `@property` 滚动渐隐、55 项关键帧、`data-mode` 三态作用域。
+- **CDS 3.0 完整还原** — 55 项关键帧、`data-mode` 三态作用域。
   这些需要 DSH 暴露宿主容器支持，**当前做不到，不建议硬追**。
+  （`@property` 滚动渐隐已经用纯 CSS 落地，见检查第 17 条。）
 
 ---
 

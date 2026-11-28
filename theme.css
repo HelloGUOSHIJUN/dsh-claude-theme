@@ -93,7 +93,7 @@ html body {
 html body {
   --dsw-alias-bg-base: #faf9f5 !important;
   --dsw-alias-bg-document-preview: #f3f1ea !important;
-  --dsw-alias-bg-document-selection: color-mix(in srgb, #2a78d6 30%, transparent) !important;
+  --dsw-alias-bg-document-selection: color-mix(in srgb, #c6613f 22%, transparent) !important;
   --dsw-alias-label-document-preview: #525252 !important;
   --dsw-alias-bg-layer-1: #ffffff !important;
   --dsw-alias-bg-layer-2: #ffffff !important;
@@ -242,10 +242,31 @@ html body {
 
 /* Type scale lives on the root, not on body: the --dsw-font-markdown-* values
    below resolve --dsh-content-font-size, and a body-local definition would make
-   them reference themselves (a cycle the browser drops as invalid). */
+   them reference themselves (a cycle the browser drops as invalid). The body
+   leading is derived from that size for the same reason: 1.24 reads cramped
+   for CJK prose, and a fixed px offset drifts as the reader grows the font. */
 html {
   --dsh-content-font-size: calc(17px + var(--dsh-content-font-delta, 0px)) !important;
   --dsh-content-font-size-secondary: calc(13px + var(--dsh-content-font-delta, 0px)) !important;
+  --dsh-content-line-height: calc(var(--dsh-content-font-size) * 1.5) !important;
+}
+
+/* CDS ring hairline: 1px at 1x, 0.5px at 2dppx, 1/3px at 3dppx. The rings are
+   inset shadows rather than borders, so a hairline never joins layout. */
+html {
+  --claude-ring: 1px;
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx), (resolution >= 2x) {
+  html {
+    --claude-ring: 0.5px;
+  }
+}
+
+@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx), (resolution >= 3x) {
+  html {
+    --claude-ring: calc(1px / 3);
+  }
 }
 
 /* Typography tokens resolve the root size above, so they stay on body. */
@@ -262,12 +283,12 @@ html body {
   --dsw-font-markdown-h4: 600 var(--dsh-content-font-size, 14px) / calc(22px + var(--dsh-content-font-delta)) var(--dsw-font-family) !important;
   --dsw-font-markdown-h4-font-weight: 600 !important;
   --dsw-font-markdown-h4-line-height: calc(22px + var(--dsh-content-font-delta)) !important;
-  --dsw-font-markdown-base: var(--dsh-content-font-size, 14px) / calc(21px + var(--dsh-content-font-delta)) var(--dsw-font-family) !important;
-  --dsw-font-markdown-base-line-height: calc(21px + var(--dsh-content-font-delta)) !important;
-  --dsw-font-markdown-base-strong: 600 var(--dsh-content-font-size, 14px) / calc(21px + var(--dsh-content-font-delta)) var(--dsw-font-family) !important;
-  --dsw-font-markdown-base-strong-line-height: calc(21px + var(--dsh-content-font-delta)) !important;
-  --dsw-font-markdown-base-italic: italic var(--dsh-content-font-size, 14px) / calc(21px + var(--dsh-content-font-delta)) var(--dsw-font-family) !important;
-  --dsw-font-markdown-base-italic-line-height: calc(21px + var(--dsh-content-font-delta)) !important;
+  --dsw-font-markdown-base: var(--dsh-content-font-size, 14px) / var(--dsh-content-line-height) var(--dsw-font-family) !important;
+  --dsw-font-markdown-base-line-height: var(--dsh-content-line-height) !important;
+  --dsw-font-markdown-base-strong: 600 var(--dsh-content-font-size, 14px) / var(--dsh-content-line-height) var(--dsw-font-family) !important;
+  --dsw-font-markdown-base-strong-line-height: var(--dsh-content-line-height) !important;
+  --dsw-font-markdown-base-italic: italic var(--dsh-content-font-size, 14px) / var(--dsh-content-line-height) var(--dsw-font-family) !important;
+  --dsw-font-markdown-base-italic-line-height: var(--dsh-content-line-height) !important;
   --dsw-font-markdown-table: var(--dsh-content-font-size-secondary, 13px) / calc(19px + var(--dsh-content-font-delta-secondary, 0px)) var(--dsw-font-family) !important;
   --dsw-font-markdown-table-line-height: calc(19px + var(--dsh-content-font-delta-secondary, 0px)) !important;
   --dsw-font-markdown-table-head: 500 var(--dsh-content-font-size-secondary, 13px) / calc(19px + var(--dsh-content-font-delta-secondary, 0px)) var(--dsw-font-family) !important;
@@ -282,7 +303,7 @@ html body {
 html body[data-ds-dark-theme] {
   --dsw-alias-bg-base: #151515 !important;
   --dsw-alias-bg-document-preview: #1a1a19 !important;
-  --dsw-alias-bg-document-selection: color-mix(in srgb, #6da7ec 30%, transparent) !important;
+  --dsw-alias-bg-document-selection: color-mix(in srgb, #d97757 30%, transparent) !important;
   --dsw-alias-label-document-preview: #a3a3a3 !important;
   --dsw-alias-bg-layer-1: #1a1a19 !important;
   --dsw-alias-bg-layer-2: #20201f !important;
@@ -346,7 +367,7 @@ html body[data-ds-dark-theme] {
   --dsw-alias-interactive-bg-hover: rgba(245, 245, 245, 0.07) !important;
   --dsw-alias-settings-card-fill: #1a1a19 !important;
   --dsw-alias-settings-card-stroke: rgba(255, 255, 255, 0.1) !important;
-  --dsw-alias-label-caption: #8a8a8a !important;
+  --dsw-alias-label-caption: #898781 !important;
   --dsw-alias-label-deep-diving: #d97757 !important;
   --dsw-alias-label-deep-diving-shimmer: #e08264 !important;
   --dsw-alias-label-dimmed: #2c2c2a !important;
@@ -363,9 +384,9 @@ html body[data-ds-dark-theme] {
   --dsw-alias-link: #e0895f !important;
   --dsw-alias-markdown-citation: #20201f !important;
   --dsw-alias-markdown-code-block-banner: #20201f !important;
-  --dsw-alias-markdown-code-block: #0b0b0a !important;
+  --dsw-alias-markdown-code-block: #0b0b0b !important;
   --dsw-alias-markdown-code-segment-selected: #262624 !important;
-  --dsw-alias-markdown-code-segment-unselected: #0b0b0a !important;
+  --dsw-alias-markdown-code-segment-unselected: #0b0b0b !important;
   --dsw-alias-markdown-inline-code: #20201f !important;
   --dsw-alias-markdown-placeholder: #20201f !important;
   --dsw-alias-markdown-tag: #20201f !important;
@@ -457,34 +478,34 @@ html[data-platform='darwin'] body[data-ds-dark-theme] {
 [data-composer-card] {
   border-radius: 14px !important;
   background-color: var(--dsw-specific-input-major) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.035), inset 0 0 0 1px var(--dsw-alias-border-l2) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.035), inset 0 0 0 var(--claude-ring) var(--dsw-alias-border-l2) !important;
 }
 
 body[data-ds-dark-theme] [data-composer-card] {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--dsw-alias-border-l2) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 var(--claude-ring) var(--dsw-alias-border-l2) !important;
 }
 
 /* CDS composer states: hover lifts the ring to border-strong, focus-within adds
    the outer ring as well. */
 [data-composer-card]:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(11, 11, 11, 0.2) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 0 0 var(--claude-ring) rgba(11, 11, 11, 0.2) !important;
 }
 
 [data-composer-card]:focus-within {
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.08),
-    inset 0 0 0 1px rgba(11, 11, 11, 0.2),
+    inset 0 0 0 var(--claude-ring) rgba(11, 11, 11, 0.2),
     0 0 0 1px rgba(11, 11, 11, 0.2) !important;
 }
 
 body[data-ds-dark-theme] [data-composer-card]:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55), inset 0 0 0 var(--claude-ring) rgba(255, 255, 255, 0.2) !important;
 }
 
 body[data-ds-dark-theme] [data-composer-card]:focus-within {
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.65),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 var(--claude-ring) rgba(255, 255, 255, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.22) !important;
 }
 
@@ -529,6 +550,23 @@ body[data-ds-dark-theme] [data-composer-card]:focus-within {
   font-size: 17px !important;
   font-weight: 400 !important;
   color: var(--dsw-alias-label-primary) !important;
+}
+
+/* The import trigger beside New session always paints the elevated fill, while
+   the host's New session switches to the macOS sidebar glass tokens. Match the
+   glass fill on the wide twin so the row reads as one control; the collapsed
+   rail trigger (no .wide) stays transparent like the collapsed New session. */
+html[data-platform='darwin'] body [class*='_newSessionRow'] button[class*='_wide'] {
+  background: var(--dsw-specific-sidebar-glass-fill) !important;
+}
+
+/* New session's own hover tint is suppressed below, so the twin follows the
+   same rule: it keeps its resting fill and drops it under the pointer. The
+   darwin selector repeats the platform prefix so it outranks the resting fill
+   above; the other platforms never got that fill. */
+html[data-platform='darwin'] body [class*='_newSessionRow'] button[class*='_wide']:hover,
+html:not([data-platform='darwin']) body [class*='_newSessionRow'] button[class*='_wide']:hover {
+  background: transparent !important;
 }
 
 /* The wordmark row is removed on request; the rail opens with New chat. */
@@ -681,7 +719,7 @@ button[class*='_newSession']:hover {
    surface. */
 [data-conversation-content] > .md-code-block,
 [data-conversation-content] .md-code-block:not(.md-code-block .md-code-block) {
-  border: 1px solid var(--dsw-alias-border-l2) !important;
+  border: 0 !important;
   border-radius: 12px !important;
   background: var(--dsw-alias-markdown-code-block) !important;
   box-shadow: none !important;
@@ -704,7 +742,8 @@ button[class*='_newSession']:hover {
 }
 
 [class*='_fileCard'] {
-  border: 1px solid var(--dsw-alias-border-l2) !important;
+  border: 0 !important;
+  --claude-card-ring: var(--dsw-alias-border-l2);
   border-radius: 10px !important;
   background: var(--dsw-alias-bg-layer-1) !important;
 }
@@ -715,9 +754,38 @@ button[class*='_newSession']:hover {
    card: flat 10px corners, a sand tile for the glyph, and one compact,
    square-cornered split control whose divider is a straight hairline. */
 [data-presented-file] {
-  border: 1px solid var(--dsw-alias-border-l2) !important;
+  border: 0 !important;
   border-radius: 10px !important;
   background: var(--dsw-alias-bg-layer-1) !important;
+}
+
+/* Retina hairline. Chromium rounds a sub-pixel border up to 1px, and an inset
+   shadow disappears under a full-bleed child (the code banner does exactly
+   that), so the ring is painted as an overlay pseudo-element above the box's
+   own content. --claude-ring is 1px / 0.5px / 1/3px by resolution. */
+:is(
+  [data-conversation-content] > .md-code-block,
+  [data-conversation-content] .md-code-block:not(.md-code-block .md-code-block),
+  [class*='_fileCard'],
+  [data-presented-file],
+  [data-conversation-content] [class*='_tableScroll']:is(.md-table-wide, :has(> table > thead > tr > th:nth-child(4))):not([class*='_tableScroll'] [class*='_tableScroll']) > table
+) {
+  position: relative;
+}
+
+:is(
+  [data-conversation-content] > .md-code-block,
+  [data-conversation-content] .md-code-block:not(.md-code-block .md-code-block),
+  [class*='_fileCard'],
+  [data-presented-file],
+  [data-conversation-content] [class*='_tableScroll']:is(.md-table-wide, :has(> table > thead > tr > th:nth-child(4))):not([class*='_tableScroll'] [class*='_tableScroll']) > table
+)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 var(--claude-ring) var(--claude-card-ring, var(--dsw-alias-border-l2));
+  pointer-events: none;
 }
 
 [data-presented-file] [class*='_fileIcon'] {
@@ -884,7 +952,7 @@ button[class*='_newSession']:hover {
   .md-table-wide,
   :has(> table > thead > tr > th:nth-child(4))
 ):not([class*='_tableScroll'] [class*='_tableScroll']) > table {
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 0;
   border-radius: 10px;
 }
 
@@ -994,9 +1062,9 @@ body {
    Batch 3 — focus ring, hero pills, hover elevation, code banner, controls
    ========================================================================== */
 
-/* 1 · CDS focus: a 1.5px ring on DISCRETE controls only (buttons, links, tabs,
-   menu items). Text entry is excluded below: a full clay rectangle around a
-   one-line field reads as an error state, not as focus. */
+/* 1 · CDS focus: a 1.5px ring on DISCRETE controls only (buttons, links, tabs).
+   Text entry is excluded below: a full clay rectangle around a one-line field
+   reads as an error state, not as focus. */
 :focus-visible {
   outline: none !important;
   box-shadow:
@@ -1010,6 +1078,28 @@ body[data-ds-dark-theme] :focus-visible {
     inset 0 0 0 1px #0b0b0b,
     0 0 0 1.5px #d97757,
     0 0 6px 1px rgba(217, 119, 87, 0.3) !important;
+}
+
+/* Menu and list rows are excluded: their focus IS the host's hover fill.
+   DSH moves real DOM focus onto the row under the pointer (the model picker
+   calls item.focus() from onMouseMove), and Chromium then reports the row as
+   :focus-visible. The generic ring above therefore follows the cursor as a
+   clay rectangle around whichever model the pointer touches — in light mode it
+   reads as a red error frame on the selected model, not as keyboard focus. The
+   host already paints :focus-visible and the active row with the hover fill
+   (.option:focus-visible, .cell:focus-visible), so keyboard users keep a
+   visible target; the theme only drops its own second ring. This has to come
+   after the dark-scheme rule and carry a body prefix: the dark ring is
+   (0,2,1) and would otherwise win on specificity. */
+body :is(
+  [role='menuitem'],
+  [role='menuitemradio'],
+  [role='menuitemcheckbox'],
+  [role='option'],
+  [role='treeitem']
+):focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Text entry keeps the native caret and the field's own border. Painting the
@@ -1056,7 +1146,7 @@ body[data-ds-dark-theme] :focus-visible {
 
 /* 4 · Panel hover elevation: hairline strengthens, shadow lifts. */
 [class*='_fileCard']:hover {
-  border-color: var(--dsw-alias-border-l3) !important;
+  --claude-card-ring: var(--dsw-alias-border-l3);
   box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.09) !important;
 }
 
@@ -1075,6 +1165,13 @@ body[data-ds-dark-theme] [class*='_fileCard']:hover {
   min-height: 28px;
   border-radius: 8px;
   font-size: 13px;
+}
+
+/* Model and permission triggers are siblings in the tool row, but the host
+   ships the model label at 400 while the permission label is 500. Align the
+   model chip with the permission chip; the effort suffix keeps its own tone. */
+[data-composer-card] button[class*='_trigger'] {
+  font-weight: 500;
 }
 
 /* 7 · Code banner: 32px strip, 11px language label. The code block box is
@@ -1104,6 +1201,19 @@ body {
   font-variant-numeric: lining-nums tabular-nums;
   font-weight: 500;
   -webkit-text-stroke: 0.12px currentColor;
+}
+
+/* Dark mode compensates for retinal irradiation: white-on-black reads 10-15%
+   heavier, so CDS drops the wght axis by 30-40 ticks. The serif stack has no
+   variable axis, so the global 500 steps down to 400 instead. Code never
+   inherits the text stroke: a 0.12px halo around 12px glyphs is what makes the
+   code blocks look bold and smeared. */
+body[data-ds-dark-theme] {
+  font-weight: 400;
+}
+
+pre, code, kbd, samp {
+  -webkit-text-stroke: 0 !important;
 }
 
 /* Thinking / tool process blocks: read as body text, not as a grey caption. */
@@ -1188,16 +1298,30 @@ header[data-window-drag] :not(pre, code, kbd, samp):not(:is(pre, code, kbd, samp
   stroke: currentColor;
 }
 
-/* 1 · Segmented control: CDS capsule track (999px) with a 2px inset and a
+/* 1 · Segmented control: CDS capsule track (999px) with a 1px inset and a
    raised thumb for the selected view. Layout of the header is left native. */
 [data-conversation-tabs] {
   display: inline-flex !important;
   align-items: center !important;
   gap: 2px !important;
   min-height: 0 !important;
-  padding: 2px !important;
+  padding: 1px !important;
   border-radius: 999px !important;
   background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* The host centers the tab row on a 25px line and pulls the "more views"
+   button up by 3px. The capsule is 26px (24px thumbs plus the 1px inset), so
+   center both against the capsule and give the row 10px below it, matching the
+   10px the host puts above it. */
+div:has(> [data-conversation-tabs]) {
+  align-items: center !important;
+  padding-bottom: 10px !important;
+  container-type: inline-size;
+}
+
+[class*='_viewsMore'] {
+  margin-top: 0 !important;
 }
 
 body[data-ds-dark-theme] [data-conversation-tabs] {
@@ -1222,13 +1346,43 @@ body[data-ds-dark-theme] [data-conversation-tabs] {
 [data-conversation-tabs] > [role='tab'][aria-selected='true'] {
   background: var(--dsw-alias-bg-layer-1) !important;
   color: var(--dsw-alias-label-primary) !important;
-  box-shadow: 0 1px 2px hsl(from #0b0b0b h s l / 8%) !important;
+  box-shadow:
+    inset 0 0 0 var(--claude-ring) var(--dsw-alias-border-l2),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 2px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
 body[data-ds-dark-theme] [data-conversation-tabs] > [role='tab'][aria-selected='true'] {
   background: #2c2c2a !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  box-shadow:
+    inset 0 0 0 var(--claude-ring) rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 6px -1px rgba(0, 0, 0, 0.25) !important;
 }
+
+/* CDS collapses the tabs by container width, not viewport width. Claude's
+   pills have an icon to fall back to; DSH's View tabs are label-only (a
+   .tabLabel span, no svg), so hiding the text would leave blank pills. The
+   theme therefore tightens the same breakpoints instead of hiding: the two
+   thresholds still switch, the labels stay readable. */
+@container (width <= 254px) {
+  [data-conversation-tabs] {
+    gap: 1px !important;
+  }
+
+  [data-conversation-tabs] > [role='tab'] {
+    padding: 3px 10px !important;
+  }
+}
+
+@container (width <= 180px) {
+  [data-conversation-tabs] > [role='tab'] {
+    padding: 3px 7px !important;
+    font-size: 11px !important;
+  }
+}
+
+
 
 @media (prefers-reduced-motion: no-preference) {
   [data-conversation-tabs] > [role='tab'] {
@@ -1240,6 +1394,7 @@ body[data-ds-dark-theme] [data-conversation-tabs] > [role='tab'][aria-selected='
 body {
   --claude-spring: linear(0, .2459, .6526, .9468, 1.0764, 1.0915, 1.0585, 1.0219,
     0.9993, .9914, .9921, .9957, .9988, 1.0004, 1);
+  --claude-press: 0.975;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1250,12 +1405,11 @@ body {
     transition-timing-function: var(--claude-spring);
   }
 
-  /* Pill overshoot: chips answer a press with a short overshooting scale.
-     Only real controls: "chip" also appears in chipLabel / chipIcon /
-     chipCount, and scaling a label inside its chip makes the text jump. */
-  :is(button, a, [role='button'], [role='tab'], [role='option']):is([class*='_chip'], [class*='_pill']):active {
-    transform: scale(0.94);
-    transition: transform 300ms var(--claude-spring);
+  /* Chips and pills take the CDS press: 0.975 while held, the 15-stop spring
+     on release. Only real controls: "chip" also appears in chipLabel /
+     chipIcon / chipCount, and scaling a label inside its chip jumps the text. */
+  :is(button, a, [role='button'], [role='tab'], [role='option']):is([class*='_chip'], [class*='_pill']) {
+    transition: transform 450ms var(--claude-spring);
   }
 
   /* Reasoning glow: the running step breathes a faint clay halo. */
@@ -1266,25 +1420,62 @@ body {
   }
 }
 
-/* 6 · Skeleton dual mode: flat base and a sheen that sweeps at CDS speed. */
+/* 6 · Skeleton: CDS 3.0 splits the motion into two orthogonal mechanisms —
+   breathe (2s ease-in-out, 90ms cascade per block) and a separate 105° sheen
+   band (2s linear). They must not share one animation: the band is a ::after
+   here because the host renders no sweep element, and putting both on the
+   block would tie the two clocks together (the exact misread v4 §3.3.4 calls
+   out). Only leaf blocks animate: the host nests skeletonRow / skeletonBars /
+   skeletonCard wrappers around the bars, and pulsing both levels doubles the
+   opacity dip. */
 body {
   --dsw-alias-bg-skeleton: rgba(11, 11, 11, 0.05) !important;
+  --claude-skeleton-sheen: rgba(11, 11, 11, 0.05);
 }
 
 body[data-ds-dark-theme] {
   --dsw-alias-bg-skeleton: rgba(255, 255, 255, 0.075) !important;
+  --claude-skeleton-sheen: rgba(255, 255, 255, 0.075);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  [class*='_skeleton'] {
-    animation: claude-sheen 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  [class*='_skeleton']:not(:has([class*='_skeleton'])) {
+    position: relative;
+    overflow: hidden;
+    animation: claude-skeleton-breathe 2s ease-in-out infinite;
   }
+
+  [class*='_skeleton']:not(:has([class*='_skeleton']))::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, var(--claude-skeleton-sheen) 50%, transparent 65%);
+    animation: claude-skeleton-sweep 2s linear infinite;
+  }
+
+  :dir(rtl) [class*='_skeleton']:not(:has([class*='_skeleton']))::after {
+    background-image: linear-gradient(255deg, transparent 35%, var(--claude-skeleton-sheen) 50%, transparent 65%);
+    animation-direction: reverse;
+  }
+
+  /* CDS wave: each block steps 90ms behind the one before it. */
+  [class*='_skeleton']:not(:has([class*='_skeleton'])):nth-child(2) { animation-delay: 90ms; }
+  [class*='_skeleton']:not(:has([class*='_skeleton'])):nth-child(3) { animation-delay: 180ms; }
+  [class*='_skeleton']:not(:has([class*='_skeleton'])):nth-child(4) { animation-delay: 270ms; }
+  [class*='_skeleton']:not(:has([class*='_skeleton'])):nth-child(5) { animation-delay: 360ms; }
+  [class*='_skeleton']:not(:has([class*='_skeleton'])):nth-child(6) { animation-delay: 450ms; }
+  [class*='_skeleton']:not(:has([class*='_skeleton'])):nth-child(n + 7) { animation-delay: 540ms; }
 }
 
-@keyframes claude-sheen {
-  0% { opacity: 0.75; }
-  50% { opacity: 1; }
-  100% { opacity: 0.75; }
+@keyframes claude-skeleton-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes claude-skeleton-sweep {
+  0% { transform: translate(-100%); }
+  100% { transform: translate(100%); }
 }
 
 
@@ -1297,48 +1488,84 @@ body[data-ds-dark-theme] {
    6px slashed every completed step's tick down to a dot. The host's StateDot
    is already the CDS dot; it needs no resizing.) */
 
-/* 2 · Staggered entrance (CDS "交错入场"): list rows and menu items cascade in
-   by 20ms steps instead of appearing as one block. */
+/* 2 · Staggered entrance (CDS "交错入场"): panel and hero rows cascade in by
+   20ms steps; menus open with their text already in place. */
 @media (prefers-reduced-motion: no-preference) {
-  [role='menuitem'],
+  /* Menus open with their text already in place. The host fades a menu
+     surface's direct children in 40ms, and a row-level fade on top of that
+     only made the top rows read as a flash. Disable the enter animation;
+     the host's 80ms dismiss animation is untouched. */
+  [data-menu-phase='enter'] > * {
+    animation: none !important;
+  }
+
   [class*='_panelEntry'],
   [class*='_heroWorkspaceRow'] > * {
     animation: claude-rise 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  [role='menuitem']:nth-child(2), [class*='_panelEntry']:nth-child(2) { animation-delay: 20ms; }
-  [role='menuitem']:nth-child(3), [class*='_panelEntry']:nth-child(3) { animation-delay: 40ms; }
-  [role='menuitem']:nth-child(4), [class*='_panelEntry']:nth-child(4) { animation-delay: 60ms; }
-  [role='menuitem']:nth-child(5), [class*='_panelEntry']:nth-child(5) { animation-delay: 80ms; }
-  [role='menuitem']:nth-child(6), [class*='_panelEntry']:nth-child(6) { animation-delay: 100ms; }
-  [role='menuitem']:nth-child(n + 7), [class*='_panelEntry']:nth-child(n + 7) { animation-delay: 120ms; }
+  [class*='_panelEntry']:nth-child(2) { animation-delay: 20ms; }
+  [class*='_panelEntry']:nth-child(3) { animation-delay: 40ms; }
+  [class*='_panelEntry']:nth-child(4) { animation-delay: 60ms; }
+  [class*='_panelEntry']:nth-child(5) { animation-delay: 80ms; }
+  [class*='_panelEntry']:nth-child(6) { animation-delay: 100ms; }
+  [class*='_panelEntry']:nth-child(n + 7) { animation-delay: 120ms; }
 }
 
-/* 3 · Perceptual scroll fade on DSH's own scroll containers (tool output,
-   code blocks). Five stops, tuned so the falloff reads smooth.
+/* 3 · Scroll fade on DSH's own scroll containers (tool output, code blocks).
+   CDS 3.0 drives the two fades from the scroll position itself: 28px while
+   there is content above/below, easing to 0 at each end, so a container whose
+   content is only a few lines is not clipped at rest. Two @property lengths are
+   animated by the container's own scroll timeline (Chromium 115+) and the
+   five-stop mask reads them; with no scrollable overflow the timeline is
+   inactive and both lengths stay 0, which makes the mask a no-op.
 
    Anchored on the host's own markers, not on class substrings: "_scrollRegion"
    also matches the sidebar's layout column (not a scroller) and "_codeBody"
    matches a CSS-only, scrollbar-less container in the tool rows. The sidebar
    is deliberately NOT included either: its top holds the resident New-chat
    row and the Plugins row, so a top-edge fade washes those out permanently. */
+@property --claude-scroll-fade-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --claude-scroll-fade-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes claude-scroll-fade-top {
+  from { --claude-scroll-fade-top: 0px; }
+  to { --claude-scroll-fade-top: 28px; }
+}
+
+@keyframes claude-scroll-fade-bottom {
+  from { --claude-scroll-fade-bottom: 28px; }
+  to { --claude-scroll-fade-bottom: 0px; }
+}
+
 [data-conversation-content] [data-terminal][data-body],
 [data-step-process] [class*='_bodyScroll'],
 [data-turn-process] [class*='_bodyScroll'] {
-  --claude-fade: 28px;
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    rgb(0 0 0 / 12%) calc(var(--claude-fade) * 0.18),
-    rgb(0 0 0 / 38%) calc(var(--claude-fade) * 0.36),
-    rgb(0 0 0 / 70%) calc(var(--claude-fade) * 0.58),
-    #000 var(--claude-fade),
-    #000 calc(100% - var(--claude-fade)),
-    rgb(0 0 0 / 70%) calc(100% - var(--claude-fade) * 0.58),
-    rgb(0 0 0 / 38%) calc(100% - var(--claude-fade) * 0.36),
-    rgb(0 0 0 / 12%) calc(100% - var(--claude-fade) * 0.18),
+    rgb(0 0 0 / 12%) calc(var(--claude-scroll-fade-top) * 0.18),
+    rgb(0 0 0 / 38%) calc(var(--claude-scroll-fade-top) * 0.36),
+    rgb(0 0 0 / 70%) calc(var(--claude-scroll-fade-top) * 0.58),
+    #000 var(--claude-scroll-fade-top),
+    #000 calc(100% - var(--claude-scroll-fade-bottom)),
+    rgb(0 0 0 / 70%) calc(100% - var(--claude-scroll-fade-bottom) * 0.58),
+    rgb(0 0 0 / 38%) calc(100% - var(--claude-scroll-fade-bottom) * 0.36),
+    rgb(0 0 0 / 12%) calc(100% - var(--claude-scroll-fade-bottom) * 0.18),
     transparent 100%
   );
+  animation: claude-scroll-fade-top linear both, claude-scroll-fade-bottom linear both;
+  animation-timeline: scroll(self), scroll(self);
+  animation-range: 0 28px, calc(100% - 28px) 100%;
 }
 
 /* 4 · Cards answer the pointer with elevation rather than a colour jump. */
@@ -1350,19 +1577,16 @@ body[data-ds-dark-theme] {
   }
 }
 
-/* [class*=_card] is a SUBSTRING match, so it also selects every inner box of a
-   card group (_cardContent, _cardMainRow, _cardTitle, _cardTrailing, ...) — each
-   of those class names contains "_card". Lifting on :hover made a card jump and
-   drop a shadow under the pointer, which reads as the layout twitching rather
-   than as feedback. Block-level surfaces do not lift: they are not controls.
-   The interactive bits inside (switch, button, link) keep their own states. */
+/* [class*=_card] is a SUBSTRING match, so it also selects the card group's own
+   grid (_cards) and every inner box (_cardContent, _cardMainRow, _cardTitle,
+   ...). And :hover matches an ancestor whenever the pointer is over a child, so
+   a shadow on this rule lights up the whole slab as soon as one card inside is
+   hovered — the Plugins tab is exactly _cards > _card > _cardContent. Block-
+   level surfaces do not lift: they are not controls. The rule holds in both
+   schemes; the dark-only shadow that used to follow it re-created the slab. */
 [class*='_card']:not([class*='_card'] [class*='_card']):hover {
   transform: none;
   box-shadow: none;
-}
-
-body[data-ds-dark-theme] [class*='_card']:not([class*='_card'] [class*='_card']):hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Message actions: quiet tertiary icons that warm to secondary on hover or
@@ -1511,17 +1735,29 @@ input {
 
   [class*='_panelEntry'],
   [class*='_panelRow'],
+  [class*='_newSession'],
   [role='menuitem'],
   [data-composer-card] button,
+  [class*='_heroWorkspaceRow'] button,
   [class*='_toBottom']:not([class*='_toBottomSlot']) {
     transition: background-color 120ms cubic-bezier(0.16, 1, 0.3, 1),
       color 120ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 450ms var(--claude-spring),
       box-shadow 120ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  [data-composer-card] button:active:not(:disabled) {
-    transform: scale(0.96);
+  /* One press for every control: the CDS squish is 0.975 with the 15-stop
+     spring on release, 60ms ease-out while held. Rows answer with the same
+     scale instead of the old 0.985/0.96 one-offs. */
+  :is(
+    [data-composer-card] button,
+    [class*='_heroWorkspaceRow'] button,
+    [class*='_panelRow'],
+    [class*='_newSession'],
+    :is(button, a, [role='button'], [role='tab'], [role='option']):is([class*='_chip'], [class*='_pill'])
+  ):active {
+    transform: scale(var(--claude-press));
+    transition: transform 60ms ease-out;
   }
 
   /* Cards lift a hair on hover. */
@@ -1533,12 +1769,6 @@ input {
 
   [class*='_fileCard']:hover {
     transform: translateY(-1px);
-  }
-
-  /* Rail rows answer a press. */
-  [class*='_panelRow']:active,
-  [class*='_newSession']:active {
-    transform: scale(0.985);
   }
 
   /* The running step breathes instead of spinning. */
@@ -1565,4 +1795,11 @@ input {
 @keyframes claude-breathe {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
+}
+
+/* Menu material. The host's surface-fill default is a cool blue-grey (#303136
+   at 64% in dark), so every popup read as native blue against the warm shell.
+   Derive the fill from the theme's own menu colour; the backdrop blur stays. */
+html body {
+  --dsw-menu-surface-fill: color-mix(in srgb, var(--dsw-specific-menu) 92%, transparent) !important;
 }
